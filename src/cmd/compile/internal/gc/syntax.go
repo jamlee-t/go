@@ -653,6 +653,7 @@ func (f *Func) setWBPos(pos src.XPos) {
 
 type Op uint8
 
+// JAMLEE: node tree 中的 node 的 op
 // Node ops.
 const (
 	OXXX Op = iota

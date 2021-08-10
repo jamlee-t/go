@@ -309,6 +309,7 @@ func isInlinableButNotInlined(fn *Node) bool {
 
 const maxStackSize = 1 << 30
 
+// JAMLEE: 处理 ssa 的入口
 // compileSSA builds an SSA backend function,
 // uses it to generate a plist,
 // and flushes that plist to machine code.

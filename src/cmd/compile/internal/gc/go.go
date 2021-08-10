@@ -188,6 +188,7 @@ var minfltval [NTYPE]*Mpflt
 
 var maxfltval [NTYPE]*Mpflt
 
+// JAMLEE: 关键全局变量。会把解析的语法树放到这里
 var xtop []*Node
 
 var exportlist []*Node

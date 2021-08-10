@@ -151,6 +151,8 @@ func Main(archInit func(*Arch)) {
 
 	archInit(&thearch)
 
+	// JAMLEE: Link holds the context for writing object code from a compiler
+	// to be linker input or for reading that input into the linker.
 	Ctxt = obj.Linknew(thearch.LinkArch)
 	Ctxt.DiagFunc = yyerror
 	Ctxt.DiagFlush = flusherrors
@@ -569,7 +571,10 @@ func Main(archInit func(*Arch)) {
 	loadsys()
 
 	timings.Start("fe", "parse")
+
+	// JAMLEE: 读入源码文件。得到抽象语法树（其实是 node tree）后会分九个阶段对抽象语法树进行更新和编译。
 	lines := parseFiles(flag.Args())
+
 	timings.Stop()
 	timings.AddEvent(int64(lines), "lines")
 
@@ -726,11 +731,13 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// JAMLEE: 之前还没有开始执行ssa操作
 	// Prepare for SSA compilation.
 	// This must be before peekitabs, because peekitabs
 	// can trigger function compilation.
 	initssaconfig()
 
+	// JAMLEE: compileSSA 会被这个函数调用
 	// Just before compilation, compile itabs found on
 	// the right side of OCONVIFACE so that methods
 	// can be de-virtualized during compilation.

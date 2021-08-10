@@ -4475,6 +4475,7 @@ func (s *state) call(n *Node, k callKind) *ssa.Value {
 		case k == callDefer:
 			call = s.newValue1A(ssa.OpStaticCall, types.TypeMem, deferproc, s.mem())
 		case k == callGo:
+			// JAMLEE: go 语句的替换处理
 			call = s.newValue1A(ssa.OpStaticCall, types.TypeMem, newproc, s.mem())
 		case closure != nil:
 			// rawLoad because loading the code pointer from a

@@ -27,6 +27,7 @@ const (
 	directives                  // call handler for directives only
 )
 
+// JAMLEE: 执行扫描的操作。tok，op 表示当前扫描的字符。当前的扫描可能是 token 也可能是 op。
 type scanner struct {
 	source
 	mode   uint
@@ -68,6 +69,7 @@ func (s *scanner) setLit(kind LitKind, ok bool) {
 	s.kind = kind
 }
 
+// JAMLEE: 驱动扫描器扫描字符串。
 // next advances the scanner by reading the next token.
 //
 // If a read, source encoding, or lexical error occurs, next calls
@@ -101,6 +103,7 @@ redo:
 	s.line, s.col = s.pos()
 	s.blank = s.line > startLine || startCol == colbase
 	s.start()
+	// JAMLEE: 是否是字母。在这里组装成单词。
 	if isLetter(s.ch) || s.ch >= utf8.RuneSelf && s.atIdentChar(true) {
 		s.nextch()
 		s.ident()
@@ -184,6 +187,7 @@ redo:
 			s.number(true)
 			break
 		}
+		// JAMLEE: 如何是是三个 point
 		if s.ch == '.' {
 			s.nextch()
 			if s.ch == '.' {

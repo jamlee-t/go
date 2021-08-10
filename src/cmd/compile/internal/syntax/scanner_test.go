@@ -79,6 +79,7 @@ func TestScanner(t *testing.T) {
 		case _Operator:
 			fmt.Printf("%s:%d:%d: %s => %s (prec = %d)\n", filename, s.line, s.col, s.tok, s.op, s.prec)
 		default:
+			// JAMLEE: 关键字也会被当作字符串输出
 			fmt.Printf("%s:%d:%d: %s\n", filename, s.line, s.col, s.tok)
 		}
 	}

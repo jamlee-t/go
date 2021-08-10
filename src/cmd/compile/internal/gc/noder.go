@@ -20,6 +20,7 @@ import (
 	"cmd/internal/src"
 )
 
+// JAMLEE: 并发解析文件到对应的语法树
 // parseFiles concurrently parses files into *syntax.File structures.
 // Each declaration in every *syntax.File is converted to a syntax tree
 // and its root represented by *Node is appended to xtop.
@@ -30,6 +31,7 @@ func parseFiles(filenames []string) uint {
 	sem := make(chan struct{}, runtime.GOMAXPROCS(0)+10)
 
 	for _, filename := range filenames {
+		// JAMLEE: p 是一个 noder 的实例
 		p := &noder{
 			basemap: make(map[*syntax.PosBase]*src.PosBase),
 			err:     make(chan syntax.Error),
@@ -49,6 +51,7 @@ func parseFiles(filenames []string) uint {
 			}
 			defer f.Close()
 
+			// JAMLEE: 走到 syntax 表中，执行文件解析
 			p.file, _ = syntax.Parse(base, f, p.error, p.pragma, syntax.CheckBranches) // errors are tracked via p.error
 		}(filename)
 	}
@@ -122,6 +125,7 @@ func absFilename(name string) string {
 	return objabi.AbsFile(Ctxt.Pathname, name, pathPrefix)
 }
 
+// JAMLEE：noder 转换 ast 为 node tree。
 // noder transforms package syntax's AST into a Node tree.
 type noder struct {
 	basemap   map[*syntax.PosBase]*src.PosBase
@@ -245,6 +249,7 @@ func (p *noder) node() {
 		p.checkUnused(pragma)
 	}
 
+	// JAMLEE: 明明只是一个文件。到 xtop 中却成了两个 node
 	xtop = append(xtop, p.decls(p.file.DeclList)...)
 
 	for _, n := range p.linknames {
@@ -286,6 +291,7 @@ func (p *noder) node() {
 func (p *noder) decls(decls []syntax.Decl) (l []*Node) {
 	var cs constState
 
+	// JAMLEE: 这里分门别类又使用 p.varDecl 包装成一个 Node
 	for _, decl := range decls {
 		p.setlineno(decl)
 		switch decl := decl.(type) {
