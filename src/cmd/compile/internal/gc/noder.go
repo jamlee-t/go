@@ -305,7 +305,7 @@ func (p *noder) decls(decls []syntax.Decl) (l []*Node) {
 		p.setlineno(decl)
 		switch decl := decl.(type) {
 		case *syntax.ImportDecl:
-			// JAMLEE: 没有返回值。那具体做什么呢？
+			// JAMLEE: 没有返回值。那具体做什么呢？会初始化有关引入包的全局变量，在 iimport.go 中。会读取包文件，获取包文件里面的信息内容
 			p.importDecl(decl)
 
 		case *syntax.VarDecl:

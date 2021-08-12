@@ -576,7 +576,7 @@ func Main(archInit func(*Arch)) {
 
 	// JAMLEE: 读入源码文件。得到抽象语法树（其实是 node tree）后会分九个阶段对抽象语法树进行更新和编译。
 	// 1. 最开始 syntax.File 中形成了结构体。但是在这个 parseFile 时要进行转换为 gc.Node 的形式。
-	// 2. node tree 从 xtop 中编译
+	// 2. node tree 从 xtop 中编译。
 	lines := parseFiles(flag.Args())
 
 	timings.Stop()
@@ -741,7 +741,7 @@ func Main(archInit func(*Arch)) {
 	// can trigger function compilation.
 	initssaconfig()
 
-	// JAMLEE: compileSSA 会被这个函数调用
+	// JAMLEE: itabs 是什么专业术语?
 	// Just before compilation, compile itabs found on
 	// the right side of OCONVIFACE so that methods
 	// can be de-virtualized during compilation.
@@ -755,7 +755,7 @@ func Main(archInit func(*Arch)) {
 	for i := 0; i < len(xtop); i++ {
 		n := xtop[i]
 		if n.Op == ODCLFUNC {
-			funccompile(n)
+			funccompile(n) // JAMLEE: 函数编译，替换就是在这里做的
 			fcount++
 		}
 	}
@@ -774,6 +774,7 @@ func Main(archInit func(*Arch)) {
 		nowritebarrierrecCheck = nil
 	}
 
+	// JAMLEE: DWARF 和调试有些关系。
 	// Finalize DWARF inline routine DIEs, then explicitly turn off
 	// DWARF inlining gen so as to avoid problems with generated
 	// method wrappers.
@@ -798,6 +799,7 @@ func Main(archInit func(*Arch)) {
 		errorexit()
 	}
 
+	// JAMLEE: 这里就直接可以变为机器代码了吗。展示 asm 是在 writeobj 时展示的。
 	// Write object data to disk.
 	timings.Start("be", "dumpobj")
 	dumpdata()
@@ -829,6 +831,7 @@ func Main(archInit func(*Arch)) {
 		errorexit()
 	}
 
+	// JAMLEE: flush 时还有一些asm内容也会在这里刷新
 	flusherrors()
 	timings.Stop()
 

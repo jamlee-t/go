@@ -19,7 +19,10 @@ import (
 // Entry point of writing new object file.
 func WriteObjFile2(ctxt *Link, b *bio.Writer, pkgpath string) {
 
+	// JAMLEE: 输出 asm 内容信息
 	debugAsmEmit(ctxt)
+	// JAMLEE: 这里加一句刷新日志。会立马刷新日志
+	// ctxt.Bso.Flush()
 
 	genFuncInfoSyms(ctxt)
 
@@ -472,6 +475,7 @@ func writeAuxSymDebug(ctxt *Link, par *LSym, aux *LSym) {
 	ctxt.writeSymDebugNamed(aux, "aux for "+par.Name)
 }
 
+// JAMLEE: 输出asm信息
 func debugAsmEmit(ctxt *Link) {
 	if ctxt.Debugasm > 0 {
 		ctxt.traverseSyms(traverseDefs, ctxt.writeSymDebug)

@@ -138,6 +138,7 @@ func addvar(n *Node, t *types.Type, ctxt Class) {
 	n.Type = t
 }
 
+// JAMLEE: 返回一个Node数组
 // declare variables from grammar
 // new_name_list (type | [type] = expr_list)
 func variter(vl []*Node, t *Node, el []*Node) []*Node {

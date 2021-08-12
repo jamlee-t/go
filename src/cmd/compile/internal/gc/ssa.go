@@ -291,6 +291,7 @@ func (s *state) emitOpenDeferInfo() {
 	}
 }
 
+// JAMLEE: 编译 node 到 ssa 内容
 // buildssa builds an SSA function for fn.
 // worker indicates which of the backend workers is doing the processing.
 func buildssa(fn *Node, worker int) *ssa.Func {
@@ -1028,6 +1029,7 @@ func (s *state) move(t *types.Type, dst, src *ssa.Value) {
 	s.vars[&memVar] = store
 }
 
+// JAMLEE: 处理多个语句
 // stmtList converts the statement list n to SSA and adds it to s.
 func (s *state) stmtList(l Nodes) {
 	for _, n := range l.Slice() {
@@ -1035,6 +1037,7 @@ func (s *state) stmtList(l Nodes) {
 	}
 }
 
+// JAMLEE: 处理内部关键字语句替换
 // stmt converts the statement n to SSA and adds it to s.
 func (s *state) stmt(n *Node) {
 	if !(n.Op == OVARKILL || n.Op == OVARLIVE || n.Op == OVARDEF) {
