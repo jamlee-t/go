@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// JAMLEE: 打印语法树
+// JAMLEE: 从File结构体中打印语法树
 func TestDump(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode")

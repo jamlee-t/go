@@ -240,6 +240,7 @@ func setlineno(n *Node) src.XPos {
 }
 
 func lookup(name string) *types.Sym {
+	// JAMLEE: localpkg 是指当前正在解析的包
 	return localpkg.Lookup(name)
 }
 

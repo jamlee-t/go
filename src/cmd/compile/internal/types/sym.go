@@ -29,11 +29,11 @@ type Sym struct {
 	Importdef *Pkg   // where imported definition was found
 	Linkname  string // link name
 
-	Pkg  *Pkg
+	Pkg  *Pkg // JAMLEE: 表示当前符号在哪个包中
 	Name string // object name
 
 	// saved and restored by dcopy
-	Def        *Node    // definition: ONAME OTYPE OPACK or OLITERAL
+	Def        *Node    // definition: ONAME OTYPE OPACK or OLITERAL. JAMLEE: 名字，类型，import 或者字面量
 	Block      int32    // blocknumber to catch redeclaration
 	Lastlineno src.XPos // last declaration for diagnostic
 

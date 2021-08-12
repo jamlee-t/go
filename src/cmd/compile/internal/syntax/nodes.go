@@ -4,6 +4,8 @@
 
 package syntax
 
+// JAMLEE: Node 是一个 interface。File 结构体实现了它。从定义上来看，File 结构体仅仅是存储
+// 各种声明。
 // ----------------------------------------------------------------------------
 // Nodes
 
@@ -29,6 +31,7 @@ type node struct {
 func (n *node) Pos() Pos { return n.pos }
 func (*node) aNode()     {}
 
+// JAMLEE: File 结构体表示的是最终结果吗？根据 dumper_test.go 看是可以的
 // ----------------------------------------------------------------------------
 // Files
 
@@ -41,6 +44,7 @@ type File struct {
 	node
 }
 
+// JAMLEE: 批量定义顶级声明，写在文件中的顶级的，不被其他内容包含
 // ----------------------------------------------------------------------------
 // Declarations
 
@@ -89,7 +93,7 @@ type (
 		Group    *Group // nil means not part of a group
 		Pragma   Pragma
 		NameList []*Name
-		Type     Expr // nil means no type
+		Type     Expr // nil means no type, JAMLEE: 这里有很多类型可以选择例如，函数类型。所以是一个通用的 Expr
 		Values   Expr // nil means no values
 		decl
 	}
@@ -132,12 +136,14 @@ type (
 		expr
 	}
 
+	// JAMLEE: 表示例如函数名，变量名
 	// Value
 	Name struct {
 		Value string
 		expr
 	}
 
+	// JAMLEE: 在语法树中表示基本字面量数值。还可以表示引入包例如 "fmt" 的值
 	// Value
 	BasicLit struct {
 		Value string
@@ -161,6 +167,7 @@ type (
 		expr
 	}
 
+	// JAMLEE: 匿名函数类型，可以赋值给变量
 	// func Type { Body }
 	FuncLit struct {
 		Type *FuncType
@@ -276,6 +283,7 @@ type (
 		expr
 	}
 
+	// JAMLEE: 表示在例如变量声明中所显示的赋值函数类型
 	FuncType struct {
 		ParamList  []*Field
 		ResultList []*Field
@@ -298,6 +306,7 @@ type (
 	}
 )
 
+// JAMLEE: expr 实现了 node
 type expr struct{ node }
 
 func (*expr) aExpr() {}

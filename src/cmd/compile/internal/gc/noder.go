@@ -26,12 +26,14 @@ import (
 // and its root represented by *Node is appended to xtop.
 // Returns the total count of parsed lines.
 func parseFiles(filenames []string) uint {
+	// JAMLEE: 每个文件对应一个 noder。也就是说一个文件对应一个 noder，这样可以并发处理
 	noders := make([]*noder, 0, len(filenames))
 	// Limit the number of simultaneously open files.
 	sem := make(chan struct{}, runtime.GOMAXPROCS(0)+10)
 
+	// JAMLEE: 并发处理文件（通过syntax.Parse）。
 	for _, filename := range filenames {
-		// JAMLEE: p 是一个 noder 的实例
+		// JAMLEE: p 是一个 noder 的实例。注意和 Node 区分。
 		p := &noder{
 			basemap: make(map[*syntax.PosBase]*src.PosBase),
 			err:     make(chan syntax.Error),
@@ -42,6 +44,7 @@ func parseFiles(filenames []string) uint {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			defer close(p.err)
+			// JAMLEE: parse.go:1:1
 			base := syntax.NewFileBase(filename)
 
 			f, err := os.Open(filename)
@@ -51,17 +54,19 @@ func parseFiles(filenames []string) uint {
 			}
 			defer f.Close()
 
-			// JAMLEE: 走到 syntax 表中，执行文件解析
+			// JAMLEE: 走到 syntax 表中，执行文件解析。File 是实现 syntax.Node 的。可以遍历语法树
 			p.file, _ = syntax.Parse(base, f, p.error, p.pragma, syntax.CheckBranches) // errors are tracked via p.error
 		}(filename)
 	}
 
+	// JAMLEE: 上面的循环代码执行没有等待完成就执行 p.node 是否合理呢
 	var lines uint
 	for _, p := range noders {
 		for e := range p.err {
 			p.yyerrorpos(e.Pos, "%s", e.Msg)
 		}
 
+		// JAMLEE: 每个 p 代表一个文件语法树是一个单树根
 		p.node()
 		lines += p.file.Lines
 		p.file = nil // release memory
@@ -75,6 +80,7 @@ func parseFiles(filenames []string) uint {
 
 	localpkg.Height = myheight
 
+	// JAMLEE: 总共解析了多少行（所有文件加起来）
 	return lines
 }
 
@@ -134,7 +140,7 @@ type noder struct {
 		base *src.PosBase
 	}
 
-	file       *syntax.File
+	file       *syntax.File // JAMLEE: 对应syntax包语法树解析的文件
 	linknames  []linkname
 	pragcgobuf [][]string
 	err        chan syntax.Error
@@ -238,10 +244,12 @@ type linkname struct {
 	remote string
 }
 
+// JAMLEE: 1个node对应1个文件，必然只是一个 pkg
 func (p *noder) node() {
 	types.Block = 1
 	imported_unsafe = false
 
+	// JAMLEE: 设置全局的 localpkg, lineno, 表示当前编译的 pkg
 	p.setlineno(p.file.PkgName)
 	mkpackage(p.file.PkgName.Value)
 
@@ -249,7 +257,7 @@ func (p *noder) node() {
 		p.checkUnused(pragma)
 	}
 
-	// JAMLEE: 明明只是一个文件。到 xtop 中却成了两个 node
+	// JAMLEE: 明明只是一个文件。到 xtop 中却成了两个 node.
 	xtop = append(xtop, p.decls(p.file.DeclList)...)
 
 	for _, n := range p.linknames {
@@ -288,6 +296,7 @@ func (p *noder) node() {
 	clearImports()
 }
 
+// JAMLEE: 对 Decl 内容进行包装。
 func (p *noder) decls(decls []syntax.Decl) (l []*Node) {
 	var cs constState
 
@@ -296,6 +305,7 @@ func (p *noder) decls(decls []syntax.Decl) (l []*Node) {
 		p.setlineno(decl)
 		switch decl := decl.(type) {
 		case *syntax.ImportDecl:
+			// JAMLEE: 没有返回值。那具体做什么呢？
 			p.importDecl(decl)
 
 		case *syntax.VarDecl:
@@ -318,6 +328,7 @@ func (p *noder) decls(decls []syntax.Decl) (l []*Node) {
 	return
 }
 
+// JAMLEE: 对 ImportDecl 进行处理。也没有返回值，那操作给到什么存储了呢？
 func (p *noder) importDecl(imp *syntax.ImportDecl) {
 	if imp.Path.Bad {
 		return // avoid follow-on errors if there was a syntax error
@@ -327,8 +338,9 @@ func (p *noder) importDecl(imp *syntax.ImportDecl) {
 		p.checkUnused(pragma)
 	}
 
+	// JAMLEE: importfile 能够得到一个引入的包。
 	val := p.basicLit(imp.Path)
-	ipkg := importfile(&val)
+	ipkg := importfile(&val) // JAMLEE: ipkg 是 importedpkg
 
 	if ipkg == nil {
 		if nerrors == 0 {
@@ -343,9 +355,11 @@ func (p *noder) importDecl(imp *syntax.ImportDecl) {
 	if imp.LocalPkgName != nil {
 		my = p.name(imp.LocalPkgName)
 	} else {
+		// JAMLEE: 查找包，例如档期的 ipkg.Name 的值 fmt。意思是在 data 包中 lookup fmt 包。返回 my 表示一个符号 fmt 在 data 包中
 		my = lookup(ipkg.Name)
 	}
 
+	// JAMLEE: 制作出来一个 node。OPACK 代表着 import 操作。
 	pack := p.nod(imp, OPACK, nil, nil)
 	pack.Sym = my
 	pack.Name.Pkg = ipkg
@@ -363,6 +377,7 @@ func (p *noder) importDecl(imp *syntax.ImportDecl) {
 	if my.Def != nil {
 		redeclare(pack.Pos, my, "as imported package name")
 	}
+	// JAMLEE: 将 my 这个符号关联到 pack
 	my.Def = asTypesNode(pack)
 	my.Lastlineno = pack.Pos
 	my.Block = 1 // at top level
@@ -1373,6 +1388,7 @@ func checkLangCompat(lit *syntax.BasicLit) {
 	}
 }
 
+// JAMLEE: 基本字面量。从 syntax.BasicLit 里翻译过来。返回一个 Val （内部值定义在 mpint.go）
 func (p *noder) basicLit(lit *syntax.BasicLit) Val {
 	// We don't use the errors of the conversion routines to determine
 	// if a literal string is valid because the conversion routines may
@@ -1464,6 +1480,7 @@ func (p *noder) wrapname(n syntax.Node, x *Node) *Node {
 	return x
 }
 
+// JAMLEE: 制作出来一个 gc.Node
 func (p *noder) nod(orig syntax.Node, op Op, left, right *Node) *Node {
 	return nodl(p.pos(orig), op, left, right)
 }
@@ -1474,6 +1491,7 @@ func (p *noder) nodSym(orig syntax.Node, op Op, left *Node, sym *types.Sym) *Nod
 	return n
 }
 
+// JAMLEE: 获取 Node 中的 pos 信息
 func (p *noder) pos(n syntax.Node) src.XPos {
 	// TODO(gri): orig.Pos() should always be known - fix package syntax
 	xpos := lineno
@@ -1483,6 +1501,7 @@ func (p *noder) pos(n syntax.Node) src.XPos {
 	return xpos
 }
 
+// JAMLEE: 当前noder对应文件的 pos 设置到全局变量 lineno （lex.go）
 func (p *noder) setlineno(n syntax.Node) {
 	if n != nil {
 		lineno = p.pos(n)

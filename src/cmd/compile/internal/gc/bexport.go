@@ -152,6 +152,7 @@ func untype(ctype Ctype) *types.Type {
 
 var predecl []*types.Type // initialized lazily
 
+// JAMLEE: 返回默认的类型列表
 func predeclared() []*types.Type {
 	if predecl == nil {
 		// initialize lazily to be sure that all

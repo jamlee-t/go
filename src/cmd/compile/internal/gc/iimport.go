@@ -65,6 +65,7 @@ func expandInline(fn *Node) {
 	r.doInline(fn)
 }
 
+// JAMLEE: 从 importers 中可以获取到一个 importReader
 func importReaderFor(n *Node, importers map[*types.Sym]iimporterAndOffset) *importReader {
 	x, ok := importers[n.Sym]
 	if !ok {
@@ -74,6 +75,7 @@ func importReaderFor(n *Node, importers map[*types.Sym]iimporterAndOffset) *impo
 	return x.p.newReader(x.off, n.Sym.Pkg)
 }
 
+// JAMLEE: 数据读取器，每次读取读 int64 数据
 type intReader struct {
 	*bio.Reader
 	pkg *types.Pkg
@@ -88,6 +90,7 @@ func (r *intReader) int64() int64 {
 	return i
 }
 
+// JAMLEE: 二进制的方式读取信息 uint64
 func (r *intReader) uint64() uint64 {
 	i, err := binary.ReadUvarint(r.Reader)
 	if err != nil {
@@ -97,6 +100,7 @@ func (r *intReader) uint64() uint64 {
 	return i
 }
 
+// JAMLEE: iimport 处理 import 声明时会用到。in 是传入的已经打开的包的 bio.Reader. 从里面可以读取数据信息。
 func iimport(pkg *types.Pkg, in *bio.Reader) (fingerprint goobj2.FingerprintType) {
 	ir := &intReader{in, pkg}
 
@@ -106,6 +110,7 @@ func iimport(pkg *types.Pkg, in *bio.Reader) (fingerprint goobj2.FingerprintType
 		errorexit()
 	}
 
+	// JAMLEE: sLen 和 dLen 是指 string 和 decl 数据
 	sLen := ir.uint64()
 	dLen := ir.uint64()
 
@@ -122,6 +127,7 @@ func iimport(pkg *types.Pkg, in *bio.Reader) (fingerprint goobj2.FingerprintType
 
 	in.MustSeek(int64(sLen+dLen), os.SEEK_CUR)
 
+	// JAMLEE: pkg 存储到了 p 中
 	p := &iimporter{
 		ipkg: pkg,
 
@@ -190,6 +196,7 @@ func iimport(pkg *types.Pkg, in *bio.Reader) (fingerprint goobj2.FingerprintType
 			inlineImporter[s] = iimporterAndOffset{p, off}
 		}
 	}
+	// JAMLEE: 上面表示的 declImporter 和 inlineImporter 全局变量存储。
 
 	// Fingerprint
 	n, err := io.ReadFull(in, fingerprint[:])

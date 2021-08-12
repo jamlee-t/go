@@ -357,6 +357,7 @@ func Main(archInit func(*Arch)) {
 
 	thearch.LinkArch.Init(Ctxt)
 
+	// JAMLEE: 拼接出 .o 后缀文件的输出文件地址
 	if outfile == "" {
 		p := flag.Arg(0)
 		if i := strings.LastIndex(p, "/"); i >= 0 {
@@ -560,6 +561,7 @@ func Main(archInit func(*Arch)) {
 	types.FErr = int(FErr)
 	types.Ctxt = Ctxt
 
+	// JAMLEE: universe.go 文件。初始化基本类型
 	initUniverse()
 
 	dclcontext = PEXTERN
@@ -573,6 +575,8 @@ func Main(archInit func(*Arch)) {
 	timings.Start("fe", "parse")
 
 	// JAMLEE: 读入源码文件。得到抽象语法树（其实是 node tree）后会分九个阶段对抽象语法树进行更新和编译。
+	// 1. 最开始 syntax.File 中形成了结构体。但是在这个 parseFile 时要进行转换为 gc.Node 的形式。
+	// 2. node tree 从 xtop 中编译
 	lines := parseFiles(flag.Args())
 
 	timings.Stop()
@@ -1002,6 +1006,7 @@ func saveerrors() {
 	nerrors = 0
 }
 
+// JAMLEE: 处理 ar 文件, name 为文件名。获取文件大小。 0-16 是文件标识符，48-58 是文件大小
 func arsize(b *bufio.Reader, name string) int {
 	var buf [ArhdrSize]byte
 	if _, err := io.ReadFull(b, buf[:]); err != nil {
@@ -1036,7 +1041,9 @@ func islocalname(name string) bool {
 		strings.HasPrefix(name, "../") || name == ".."
 }
 
+// JAMLEE: 根据路径查询包的位置，返回值为文件路径。https://zh.wikipedia.org/wiki/Ar_(Unix)
 func findpkg(name string) (file string, ok bool) {
+	// JAMLEE: 是否是localname。localname是指以 ./ or ../ or / 开头
 	if islocalname(name) {
 		if nolocalimports {
 			return "", false
@@ -1074,6 +1081,7 @@ func findpkg(name string) (file string, ok bool) {
 		return file, ok
 	}
 
+	// JAMLEE: 查看 .a 文件 或者 .o 文件
 	for _, dir := range idirs {
 		file = fmt.Sprintf("%s/%s.a", dir, name)
 		if _, err := os.Stat(file); err == nil {
@@ -1099,6 +1107,7 @@ func findpkg(name string) (file string, ok bool) {
 			suffix = "msan"
 		}
 
+		// JAMLEE: 从 GOROOT 中拼接路径。返回 file
 		file = fmt.Sprintf("%s/pkg/%s_%s%s%s/%s.a", objabi.GOROOT, objabi.GOOS, objabi.GOARCH, suffixsep, suffix, name)
 		if _, err := os.Stat(file); err == nil {
 			return file, true
@@ -1199,6 +1208,7 @@ func importfile(f *Val) *types.Pkg {
 		}
 	}
 
+	// JAMLEE: 根据路径查询包的位置
 	file, found := findpkg(path_)
 	if !found {
 		yyerror("can't find import: %q", path_)
@@ -1226,6 +1236,7 @@ func importfile(f *Val) *types.Pkg {
 		errorexit()
 	}
 
+	// JAMLEE: 如果是 .a 文件
 	if p == "!<arch>\n" { // package archive
 		// package export block should be first
 		sz := arsize(imp.Reader, "__.PKGDEF")
@@ -1233,6 +1244,7 @@ func importfile(f *Val) *types.Pkg {
 			yyerror("import %s: not a package file", file)
 			errorexit()
 		}
+		// JAMLEE: 继续读入一行数据
 		p, err = imp.ReadString('\n')
 		if err != nil {
 			yyerror("import %s: reading input: %v", file, err)
@@ -1240,10 +1252,12 @@ func importfile(f *Val) *types.Pkg {
 		}
 	}
 
+	// JAMLEE: 如果是 .o 文件。__.PKGDEF 也有 .o 文件的头
 	if !strings.HasPrefix(p, "go object ") {
 		yyerror("import %s: not a go object file: %s", file, p)
 		errorexit()
 	}
+	// JAMLEE: 检查当前的架构和加载的包的.o中的信息架构是否是一致
 	q := fmt.Sprintf("%s %s %s %s\n", objabi.GOOS, objabi.GOARCH, objabi.Version, objabi.Expstring())
 	if p[10:] != q {
 		yyerror("import %s: object is [%s] expected [%s]", file, p[10:], q)
@@ -1293,23 +1307,26 @@ func importfile(f *Val) *types.Pkg {
 		return nil
 
 	case 'B':
+		// JAMLEE: 如果是二进制模式的
 		if Debug_export != 0 {
 			fmt.Printf("importing %s (%s)\n", path_, file)
 		}
 		imp.ReadByte() // skip \n after $$B
 
+		// JAMLEE: 读取文件的内容数据, 只读1byte
 		c, err = imp.ReadByte()
 		if err != nil {
 			yyerror("import %s: reading input: %v", file, err)
 			errorexit()
 		}
-
+		// JAMLEE: c 在这里必须是 i 。表示 indexed format
 		// Indexed format is distinguished by an 'i' byte,
 		// whereas previous export formats started with 'c', 'd', or 'v'.
 		if c != 'i' {
 			yyerror("import %s: unexpected package format byte: %v", file, c)
 			errorexit()
 		}
+		// JAMLEE: 获取到一个导入包的指纹
 		fingerprint = iimport(importpkg, imp)
 
 	default:
@@ -1317,6 +1334,7 @@ func importfile(f *Val) *types.Pkg {
 		errorexit()
 	}
 
+	// JAMLEE: 在 Ctxt 全局变量中进行了包引入操作
 	// assume files move (get installed) so don't record the full path
 	if packageFile != nil {
 		// If using a packageFile map, assume path_ can be recorded directly.
@@ -1351,6 +1369,7 @@ func pkgnotused(lineno src.XPos, path string, name string) {
 	}
 }
 
+// JAMLEE: 设置 localpkg
 func mkpackage(pkgname string) {
 	if localpkg.Name == "" {
 		if pkgname == "_" {
@@ -1364,6 +1383,7 @@ func mkpackage(pkgname string) {
 	}
 }
 
+// JAMLEE: 找到没有使用的包,包导入了但是没有使用是一种错误
 func clearImports() {
 	type importedPkg struct {
 		pos  src.XPos
@@ -1449,6 +1469,9 @@ func concurrentBackendAllowed() bool {
 	return true
 }
 
+// JAMLEE: DWARF是一种调试文件格式，许多编译器和调试器都使用它来支持源代码级调试。它满足了许多过程语言
+// (如C、c++和Fortran)的需求，并被设计为可扩展到其他语言。DWARF是独立于体系结构的，适用于任何处理器或操作系统。
+// 它广泛用于Unix、Linux和其他操作系统，以及独立环境中。
 // recordFlags records the specified command-line flags to be placed
 // in the DWARF info.
 func recordFlags(flags ...string) {

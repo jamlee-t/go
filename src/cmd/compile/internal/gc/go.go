@@ -123,6 +123,7 @@ var debugstr string
 var Debug_checknil int
 var Debug_typeassert int
 
+// JAMLEE: 当前正在编译的包
 var localpkg *types.Pkg // package being compiled
 
 var inimport bool // set during import
@@ -243,6 +244,7 @@ var genDwarfInline int
 
 var debuglive int
 
+// JAMLEE: 全局的输出文件结构定义
 var Ctxt *obj.Link
 
 var writearchive bool

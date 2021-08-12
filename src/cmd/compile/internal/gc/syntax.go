@@ -653,7 +653,7 @@ func (f *Func) setWBPos(pos src.XPos) {
 
 type Op uint8
 
-// JAMLEE: node tree 中的 node 的 op
+// JAMLEE: node tree 中的 node 的 op。用于表示 node 的 op 类型。或者说 node 是干嘛的
 // Node ops.
 const (
 	OXXX Op = iota

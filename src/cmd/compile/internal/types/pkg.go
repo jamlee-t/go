@@ -18,6 +18,7 @@ var pkgMap = make(map[string]*Pkg)
 // MaxPkgHeight is a height greater than any likely package height.
 const MaxPkgHeight = 1e9
 
+// JAMLEE: 类型 pkg 的表示
 type Pkg struct {
 	Path    string // string literal used in import statement, e.g. "runtime/internal/sys"
 	Name    string // package name, e.g. "sys"
@@ -87,6 +88,7 @@ func (pkg *Pkg) Lookup(name string) *Sym {
 // List of .inittask entries in imported packages, in source code order.
 var InitSyms []*Sym
 
+// JAMLEE: 在 pkg 中查询 symbol。比如自己写了 data 包，里面引入了 fmt, pkg 此时为 localpkg,
 // LookupOK looks up name in pkg and reports whether it previously existed.
 func (pkg *Pkg) LookupOK(name string) (s *Sym, existed bool) {
 	// TODO(gri) remove this check in favor of specialized lookup
@@ -97,6 +99,7 @@ func (pkg *Pkg) LookupOK(name string) (s *Sym, existed bool) {
 		return s, true
 	}
 
+	// JAMLEE: name = fmt, pkg = data。是 data 中
 	s = &Sym{
 		Name: name,
 		Pkg:  pkg,
