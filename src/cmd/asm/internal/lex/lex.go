@@ -57,6 +57,7 @@ func (t ScanToken) String() string {
 	}
 }
 
+// JAMLEE: name 传入的是一个文件地址
 // NewLexer returns a lexer for the named file and the given link context.
 func NewLexer(name string) TokenReader {
 	input := NewInput(name)
@@ -64,12 +65,14 @@ func NewLexer(name string) TokenReader {
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
+	// JAMLEE: 在 input 中 push 1 个 tokenizer
 	input.Push(NewTokenizer(name, fd, fd))
 	return input
 }
 
 // The other files in this directory each contain an implementation of TokenReader.
 
+// JAMLEE: tokenReader 会删除所有空白，除了换行
 // A TokenReader is like a reader, but returns lex tokens of type Token. It also can tell you what
 // the text of the most recently returned token is, and where it was found.
 // The underlying scanner elides all spaces except newline, so the input looks like a stream of

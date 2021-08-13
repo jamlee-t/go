@@ -17,6 +17,7 @@ import (
 	"cmd/internal/src"
 )
 
+// JAMLEE: 将输入的文件包装成一个 input 结构
 // Input is the main input: a stack of readers and some macro definitions.
 // It also handles #include processing (by pushing onto the input stack)
 // and parses and instantiates macro definitions.

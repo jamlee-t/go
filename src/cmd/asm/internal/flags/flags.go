@@ -5,6 +5,7 @@
 // Package flags implements top-level flags and the usage message for the assembler.
 package flags
 
+// JAMLEE: 定义 asm 的输入参数
 import (
 	"cmd/internal/objabi"
 	"flag"

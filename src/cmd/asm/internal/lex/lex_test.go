@@ -6,6 +6,7 @@ package lex
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 	"text/scanner"
@@ -17,6 +18,7 @@ type lexTest struct {
 	output string
 }
 
+// JAMLEE: 为什么测试数据都是 macro 定义
 var lexTests = []lexTest{
 	{
 		"empty",
@@ -359,4 +361,23 @@ func firstError(input *Input) (err error) {
 			return
 		}
 	}
+}
+
+// By JAMLEE: test lexer
+func TestLexHandleFile(t *testing.T) {
+	lex := NewLexer("/Volumes/code/code/go/src/0_note/data/parse_asm.s")
+	var tok ScanToken
+next:
+	for {
+		tok = lex.Next()
+		switch tok {
+		case '\n', ';':
+			continue
+		case scanner.EOF:
+			return
+		}
+		break
+	}
+	fmt.Println(lex.Text())
+	goto next
 }

@@ -19,8 +19,10 @@ if a > 10 {
 }`
 
 	var s scanner.Scanner
+	// JAMLEE: Init 时传入一个 reader。
 	s.Init(strings.NewReader(src))
 	s.Filename = "example"
+	// JAMLEE: 每次 scan 就得到一个 tok。tok 表示 s.TokenText() 类型
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		fmt.Printf("%s: %s\n", s.Position, s.TokenText())
 	}

@@ -60,6 +60,7 @@ func main() {
 
 	architecture.Init(ctxt)
 
+	// JAMLEE: 这个 buf 应该是写入对象，到底谁在往 buf 中写入数据呢？
 	// Create object file, write header.
 	buf, err := bio.Create(*flags.OutputFile)
 	if err != nil {
@@ -74,6 +75,8 @@ func main() {
 
 	var ok, diag bool
 	var failedFile string
+
+	// JAMLEE: flag.Args 代表每个 .s 文件
 	for _, f := range flag.Args() {
 		lexer := lex.NewLexer(f)
 		parser := asm.NewParser(ctxt, architecture, lexer)
@@ -81,6 +84,7 @@ func main() {
 			diag = true
 			log.Printf(format, args...)
 		}
+		// JAMLEE: 解析符号ABI
 		if *flags.SymABIs {
 			ok = parser.ParseSymABIs(buf)
 		} else {

@@ -38,10 +38,10 @@ type Parser struct {
 	addr          []obj.Addr
 	arch          *arch.Arch
 	ctxt          *obj.Link
-	firstProg     *obj.Prog
+	firstProg     *obj.Prog  // JAMLEE: 第一条机器码和下面的最后一条机器码。解析完毕会形成这些内容。
 	lastProg      *obj.Prog
 	dataAddr      map[string]int64 // Most recent address for DATA for this symbol.
-	isJump        bool             // Instruction being assembled is a jump.
+	isJump        bool             // Instruction being assembled is a jump. // JAMLEE: 解析每条代码时的中间过程
 	errorWriter   io.Writer
 }
 
@@ -90,9 +90,11 @@ func (p *Parser) pos() src.XPos {
 	return p.ctxt.PosTable.XPos(src.MakePos(p.lex.Base(), uint(p.lineNum), 0))
 }
 
+// JAMLEE: 解析器入口。返回一个  obj.Prog
 func (p *Parser) Parse() (*obj.Prog, bool) {
 	scratch := make([][]lex.Token, 0, 3)
 	for {
+		// JAMLEE: 一行一行的解析。每行汇编语句可以解析为 word, cond, operands 三中类型
 		word, cond, operands, ok := p.line(scratch)
 		if !ok {
 			break
@@ -102,8 +104,10 @@ func (p *Parser) Parse() (*obj.Prog, bool) {
 		if p.pseudo(word, operands) {
 			continue
 		}
+		// JAMLEE: Instructions 是个 as 的数组里面是所有机器码的定义
 		i, present := p.arch.Instructions[word]
 		if present {
+			// JAMLEE: p.instruction 会对全局变量做些什么呢？
 			p.instruction(i, word, cond, operands)
 			continue
 		}
@@ -132,6 +136,7 @@ func (p *Parser) ParseSymABIs(w io.Writer) bool {
 	return p.errorCount == 0
 }
 
+// JAMLEE: 读取一句（行）汇编代码。返回一句的 token
 // line consumes a single assembly line from p.lex of the form
 //
 //   {label:} WORD[.cond] [ arg {, arg} ] (';' | '\n')
@@ -237,9 +242,11 @@ next:
 	return word, cond, operands, true
 }
 
+// JAMLEE: obj.As 是指 asm code
 func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Token) {
 	p.addr = p.addr[0:0]
 	p.isJump = p.arch.IsJump(word)
+	// JAMLEE: 找到操作数的地址
 	for _, op := range operands {
 		addr := p.address(op)
 		if !p.isJump && addr.Reg < 0 { // Jumps refer to PC, a pseudo.
@@ -247,13 +254,16 @@ func (p *Parser) instruction(op obj.As, word, cond string, operands [][]lex.Toke
 		}
 		p.addr = append(p.addr, addr)
 	}
+	// JAMLEE: 如果是跳转指令
 	if p.isJump {
 		p.asmJump(op, cond, p.addr)
 		return
 	}
+	// JAMLEE: 汇编指令处理，到底把输出放到哪里
 	p.asmInstruction(op, cond, p.addr)
 }
 
+// JAMLEE: 伪汇编代码这里会处理
 func (p *Parser) pseudo(word string, operands [][]lex.Token) bool {
 	switch word {
 	case "DATA":

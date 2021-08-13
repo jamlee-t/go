@@ -540,11 +540,13 @@ func (p *Parser) branch(jmp, target *obj.Prog) {
 // MOVW R9, (R10)
 func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 	// fmt.Printf("%s %+v\n", op, a)
+	// JAMLEE: 单个机器吗表示
 	prog := &obj.Prog{
 		Ctxt: p.ctxt,
 		Pos:  p.pos(),
 		As:   op,
 	}
+	// JAMLEE: 处理下操作数
 	switch len(a) {
 	case 0:
 		// Nothing to do.

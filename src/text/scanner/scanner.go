@@ -639,6 +639,7 @@ func (s *Scanner) scanComment(ch rune) rune {
 	return ch
 }
 
+// JAMLEE: rune 返回表示当前的 scanner 中扫描的字符串的类型
 // Scan reads the next token or Unicode character from source and returns it.
 // It only recognizes tokens t for which the respective Mode bit (1<<-t) is set.
 // It returns EOF at the end of the source. It reports scanner errors (read and

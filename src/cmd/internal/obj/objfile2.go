@@ -27,7 +27,7 @@ func WriteObjFile2(ctxt *Link, b *bio.Writer, pkgpath string) {
 	genFuncInfoSyms(ctxt)
 
 	w := writer{
-		Writer:  goobj2.NewWriter(b),
+		Writer:  goobj2.NewWriter(b), // JAMLEE: 写入内容到 b 中
 		ctxt:    ctxt,
 		pkgpath: objabi.PathToPrefix(pkgpath),
 	}
@@ -46,7 +46,7 @@ func WriteObjFile2(ctxt *Link, b *bio.Writer, pkgpath string) {
 		Fingerprint: ctxt.Fingerprint,
 		Flags:       flags,
 	}
-	h.Write(w.Writer)
+	h.Write(w.Writer) // JAMLEE: 写入 header 和指纹信息
 
 	// String table
 	w.StringTable()
@@ -173,6 +173,8 @@ func WriteObjFile2(ctxt *Link, b *bio.Writer, pkgpath string) {
 	// Fix up block offsets in the header
 	end := start + int64(w.Offset())
 	b.MustSeek(start, 0)
+
+	// JAMLEE： 写入最后的结构体
 	h.Write(w.Writer)
 	b.MustSeek(end, 0)
 }

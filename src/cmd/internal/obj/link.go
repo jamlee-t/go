@@ -270,7 +270,7 @@ const (
 // be left zeroed by creators of Prog lists.
 type Prog struct {
 	Ctxt     *Link    // linker context
-	Link     *Prog    // next Prog in linked list
+	Link     *Prog    // next Prog in linked list // JAMLEE: 机器码自动连接成串，知道 First 就知道所有的机器码了
 	From     Addr     // first source operand
 	RestArgs []Addr   // can pack any operands that not fit into {Prog.From, Prog.To}
 	To       Addr     // destination operand (second is RegTo2 below)
@@ -647,7 +647,7 @@ type Pcdata struct {
 // to be linker input or for reading that input into the linker.
 type Link struct {
 	Headtype           objabi.HeadType
-	Arch               *LinkArch
+	Arch               *LinkArch  // JAMLEE: 这里和编译过程用到的那个 Arch 还不一样。这个没有 Instruction 数组
 	Debugasm           int
 	Debugvlog          bool
 	Debugpcln          string
@@ -658,7 +658,7 @@ type Link struct {
 	Flag_locationlists bool
 	Flag_go115newobj   bool // use new object file format
 	Retpoline          bool // emit use of retpoline stubs for indirect jmp/call
-	Bso                *bufio.Writer
+	Bso                *bufio.Writer // JAMLEE: 写入 output 文件
 	Pathname           string
 	hashmu             sync.Mutex       // protects hash, funchash
 	hash               map[string]*LSym // name -> sym mapping

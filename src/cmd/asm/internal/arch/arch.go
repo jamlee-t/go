@@ -27,6 +27,7 @@ const (
 	RPC
 )
 
+// JAMLEE: asm 专门定义的 Arch，其中有Instructions，含有所有的指令列表。
 // Arch wraps the link architecture object with more architecture-specific information.
 type Arch struct {
 	*obj.LinkArch
@@ -99,6 +100,7 @@ func jumpWasm(word string) bool {
 	return word == "JMP" || word == "CALL" || word == "Call" || word == "Br" || word == "BrIf"
 }
 
+// JAMLEE: 处理一些汇编的简写和别名
 func archX86(linkArch *obj.LinkArch) *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
