@@ -20,6 +20,7 @@ type Plist struct {
 // It is used to provide access to cached/bulk-allocated Progs to the assemblers.
 type ProgAlloc func() *Prog
 
+// JAMLEE: 里面的调用了Arch的方法。对 Prog 这种结构体转换为机器码。
 func Flushplist(ctxt *Link, plist *Plist, newprog ProgAlloc, myimportpath string) {
 	// Build list of symbols, and assign instructions to lists.
 	var curtext *LSym
@@ -114,7 +115,9 @@ func Flushplist(ctxt *Link, plist *Plist, newprog ProgAlloc, myimportpath string
 	for _, s := range text {
 		mkfwd(s)
 		linkpatch(ctxt, s, newprog)
+		// JAMLEE: 调用 arch 的预处理方法
 		ctxt.Arch.Preprocess(ctxt, s, newprog)
+		// JAMLEE: 调用 arch 的汇编转机器代码方法
 		ctxt.Arch.Assemble(ctxt, s, newprog)
 		if ctxt.Errors > 0 {
 			continue

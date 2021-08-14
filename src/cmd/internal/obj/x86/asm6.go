@@ -107,7 +107,7 @@ type movtab struct {
 	op   [4]uint8
 }
 
-// JAMLEE: 这里是用来表示操作参数。
+// JAMLEE: 这里是ytab用来表示操作参数。也可以说是指 ytype。
 // 调试寄存器（32位）：DR0、DR1、DR2、DR3、DR4、DR5、DR6、DR7
 // 测试寄存器（32位）：TR0、TR1、TR2、TR3、TR4、TR5、TR6、TR7
 // AVX寄存器，YMM0 ~ YMM15(256位)，还有 ZMM0 ~ ZMM15 (512位)
@@ -120,7 +120,7 @@ const (
 	Yi8 // $x, x fits in int8
 	Yu8 // $x, x fits in uint8
 	Yu7 // $x, x in 0..127 (fits in both int8 and uint8)
-	Ys32
+	Ys32 // JAMLEE: 例如 Ys32 和其他的关系，比如包含 Yi8 该怎么表示呢。只要 ycover[Yi8 * Ymax + Ys32] 的值为1。就表示 Ys32 包含它。类似的指令就可以共用了。
 	Yi32 // JAMLEE: 立即数32位
 	Yi64 // JAMLEE: 立即数64位
 	Yiauto
@@ -888,6 +888,7 @@ var ysha1rnds4 = []ytab{
 
 // JAMLEE: oclass 是计算 ytype（p.From and p.To 的类型） 用的。optab 的第二个字段是 ytab。这里的 opBytes定义呢？
 // opBytes 是从 offset 来计算。也会看ytab之前的offset。
+// ycover 数组。就是说只要 + Ys32 就是指 Ys32 的值和该值有包含关系。
 
 // You are doasm, holding in your hand a *obj.Prog with p.As set to, say,
 // ACRC32, and p.From and p.To as operands (obj.Addr).  The linker scans optab
@@ -1818,6 +1819,7 @@ var optab =
 	{0, nil, 0, opBytes{}},
 }
 
+// JAMLEE: 这里是 opindex，ALAST 是最大指令编号。而且指令数被 obj.AMask 限制，最大编号为 0x8fff
 var opindex [(ALAST + 1) & obj.AMask]*Optab
 
 // useAbs reports whether s describes a symbol that must avoid pc-relative addressing.
@@ -2270,7 +2272,8 @@ func instinit(ctxt *obj.Link) {
 		plan9privates = ctxt.Lookup("_privates")
 	}
 
-	// JAMLEE: avxOptab, intel 的 vex 指令
+	// JAMLEE: avxOptab, intel 的 vex 指令。&obj.AMask 是为了防止指令超出数量限制。用 as 的编号来当作 index。最终会
+	// 都放到 opindex。
 	for i := range avxOptab {
 		c := avxOptab[i].as
 		if opindex[c&obj.AMask] != nil {
@@ -2782,7 +2785,7 @@ func oclassVMem(ctxt *obj.Link, addr *obj.Addr) (int, bool) {
 	return Yxxx, false
 }
 
-// JAMLEE: 用于计算 ytype
+// JAMLEE: 用于计算 ytype。根据 a.Type 返回 ytype。
 func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 	switch a.Type {
 	case obj.TYPE_REGLIST:
