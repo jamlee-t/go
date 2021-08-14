@@ -41,6 +41,7 @@ import (
 	"sort"
 )
 
+// JAMLEE: 创建link的全局环境 ctxt。转换到机器码预计会基于这个结构体操作。
 func Linknew(arch *LinkArch) *Link {
 	ctxt := new(Link)
 	ctxt.hash = make(map[string]*LSym)

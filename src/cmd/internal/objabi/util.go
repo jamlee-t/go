@@ -18,11 +18,12 @@ func envOr(key, value string) string {
 	return value
 }
 
+// JAMLEE: 获取系统环境变量
 var (
 	defaultGOROOT string // set by linker
 
 	GOROOT   = envOr("GOROOT", defaultGOROOT)
-	GOARCH   = envOr("GOARCH", defaultGOARCH)
+	GOARCH   = envOr("GOARCH", defaultGOARCH) // JAMLEE amd64
 	GOOS     = envOr("GOOS", defaultGOOS)
 	GO386    = envOr("GO386", defaultGO386)
 	GOAMD64  = goamd64()

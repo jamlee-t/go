@@ -8,6 +8,7 @@
 
 package obj
 
+// JAMLEE: 汇编语言中的 TEXT 中的定义
 const (
 	// Don't profile the marked routine.
 	//

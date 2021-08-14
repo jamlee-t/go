@@ -27,13 +27,15 @@ func main() {
 
 	GOARCH := objabi.GOARCH
 
-	architecture := arch.Set(GOARCH)
+	// JAMLEE: 返回 asm.internal.arch.Arch 结构体。architecture.LinkArch.Init 方法
+	architecture := arch.Set(GOARCH) // JAMLEE: GOARCH=amd64
 	if architecture == nil {
 		log.Fatalf("unrecognized architecture %s", GOARCH)
 	}
 
 	flags.Parse()
 
+	// JAMLEE: Link 定义在 obj.link.Link
 	ctxt := obj.Linknew(architecture.LinkArch)
 	if *flags.PrintOut {
 		ctxt.Debugasm = 1
@@ -42,6 +44,8 @@ func main() {
 	ctxt.Flag_shared = *flags.Shared || *flags.Dynlink
 	ctxt.Flag_go115newobj = *flags.Go115Newobj
 	ctxt.IsAsm = true
+
+	// JAMLEE: 处理intel幽灵漏洞
 	switch *flags.Spectre {
 	default:
 		log.Printf("unknown setting -spectre=%s", *flags.Spectre)
@@ -55,9 +59,11 @@ func main() {
 		ctxt.Retpoline = true
 	}
 
+	// JAMLEE: Bso 设置为 os 的 Stdout
 	ctxt.Bso = bufio.NewWriter(os.Stdout)
 	defer ctxt.Bso.Flush()
 
+	// JAMLEE: 架构包中的全局变量初始化，opindex，ycover之类的变量。
 	architecture.Init(ctxt)
 
 	// JAMLEE: 这个 buf 应该是写入对象，到底谁在往 buf 中写入数据呢？
@@ -102,6 +108,7 @@ func main() {
 	}
 	if ok && !*flags.SymABIs {
 		ctxt.NumberSyms(true)
+		// JAMLEE: 写入 go obj 文件（不是 ar那种，而是 go obj header + data 的那种）
 		obj.WriteObjFile(ctxt, buf, "")
 	}
 	if !ok || diag {

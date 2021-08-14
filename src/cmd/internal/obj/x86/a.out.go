@@ -36,6 +36,7 @@ const (
 	REG_NONE = 0
 )
 
+// JAMLEE: 寄存器列表定义
 const (
 	REG_AL = obj.RBaseAMD64 + iota
 	REG_CL

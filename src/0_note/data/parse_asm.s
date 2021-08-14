@@ -12,3 +12,6 @@ TEXT ·checking(SB),$4112-16
         MOVQ SI, cpu+8(FP)       // 将偏移后的伪寄存器SP偏移量存入返回值after
         RET
                                  // 从输出的after-before来看，正好相差4K
+
+GLOBL ·Id(SB),$8
+DATA ·Id+0(SB)/1,$0x37

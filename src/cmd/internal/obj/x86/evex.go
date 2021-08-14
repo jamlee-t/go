@@ -97,6 +97,7 @@ func (evex evexBits) DispMultiplier(bcst bool) int32 {
 	return 1
 }
 
+// JAMLEE: evex 的 opcode 前缀
 // EVEX is described by using 2-byte sequence.
 // See evexBits for more details.
 const (

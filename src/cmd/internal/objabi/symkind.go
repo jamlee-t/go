@@ -30,6 +30,7 @@
 
 package objabi
 
+// JAMLEE: abi, 这些类型是内存分段的类型
 // A SymKind describes the kind of memory represented by a symbol.
 type SymKind uint8
 

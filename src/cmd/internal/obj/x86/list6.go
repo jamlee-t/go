@@ -35,6 +35,7 @@ import (
 	"fmt"
 )
 
+// JAMLEE: 寄存器字符串表示
 var Register = []string{
 	"AL", // [D_AL]
 	"CL",

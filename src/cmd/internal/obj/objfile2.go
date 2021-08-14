@@ -19,7 +19,7 @@ import (
 // Entry point of writing new object file.
 func WriteObjFile2(ctxt *Link, b *bio.Writer, pkgpath string) {
 
-	// JAMLEE: 输出 asm 内容信息
+	// JAMLEE: 输出 asm 内容信息。-S 参数打开后会调用
 	debugAsmEmit(ctxt)
 	// JAMLEE: 这里加一句刷新日志。会立马刷新日志
 	// ctxt.Bso.Flush()

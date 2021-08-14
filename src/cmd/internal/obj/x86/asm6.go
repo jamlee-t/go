@@ -28,6 +28,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// JAMLEE
+// avxTab定义在 ytab.go 文件中。里面是avx指令扩展集的指令。
+
 package x86
 
 import (
@@ -78,6 +81,7 @@ const (
 	branchLoopHead
 )
 
+// JAMLEE: 和 ytab 的zoffset 加起来的数量一致。
 // opBytes holds optab encoding bytes.
 // Each ytab reserves fixed amount of bytes in this array.
 //
@@ -85,6 +89,7 @@ const (
 // are enough to hold biggest optab op lines.
 type opBytes [31]uint8
 
+// JAMLEE: 操作码结构体表示
 type Optab struct {
 	as     obj.As
 	ytab   []ytab
@@ -92,6 +97,7 @@ type Optab struct {
 	op     opBytes
 }
 
+// JAMLEE: mov 操作码结构体表示
 type movtab struct {
 	as   obj.As
 	ft   uint8
@@ -101,6 +107,10 @@ type movtab struct {
 	op   [4]uint8
 }
 
+// JAMLEE: 这里是用来表示操作参数。
+// 调试寄存器（32位）：DR0、DR1、DR2、DR3、DR4、DR5、DR6、DR7
+// 测试寄存器（32位）：TR0、TR1、TR2、TR3、TR4、TR5、TR6、TR7
+// AVX寄存器，YMM0 ~ YMM15(256位)，还有 ZMM0 ~ ZMM15 (512位)
 const (
 	Yxxx = iota
 	Ynone
@@ -111,8 +121,8 @@ const (
 	Yu8 // $x, x fits in uint8
 	Yu7 // $x, x in 0..127 (fits in both int8 and uint8)
 	Ys32
-	Yi32
-	Yi64
+	Yi32 // JAMLEE: 立即数32位
+	Yi64 // JAMLEE: 立即数64位
 	Yiauto
 	Yal
 	Ycl
@@ -195,6 +205,8 @@ const (
 	Ymax
 )
 
+// JAMLEE: 指操作数的类型。比如 zr_m 指 reg 到 mem
+// OpCode由6个域组成  1.Prefixes 2.code 3.ModR/M 4.SIB 5.Displacement 6.Immediate
 const (
 	Zxxx = iota
 	Zlit
@@ -246,6 +258,7 @@ const (
 	Zil_rr
 	Zbyte
 
+	// JAMLEE: 下面这些是 vex（VEX prefix）。vex是 vector extensions。evex 是 avx-512
 	Zvex_rm_v_r
 	Zvex_rm_v_ro
 	Zvex_r_v_rm
@@ -280,16 +293,19 @@ const (
 	Zmax
 )
 
+// JAMLEE: 这里的p是optab中的结构体的前缀 prefix。前缀包括 rex 和 vex
+// 汇编语言REX前缀怎么用？ - 知乎
+// https://www.zhihu.com/question/31289006
 const (
 	Px   = 0
 	Px1  = 1    // symbolic; exact value doesn't matter
 	P32  = 0x32 // 32-bit only
 	Pe   = 0x66 // operand escape
-	Pm   = 0x0f // 2byte opcode escape
-	Pq   = 0xff // both escapes: 66 0f
+	Pm   = 0x0f // 2byte opcode escape // JAMLEE: 例如 0x0F58 指令代表 ADDPS。
+	Pq   = 0xff // both escapes: 66 0f // JAMLEE: 例如 0x660f58 代表 ADDPD。这里0xff会被替换的（在 doasm 方法）。
 	Pb   = 0xfe // byte operands
-	Pf2  = 0xf2 // xmm escape 1: f2 0f
-	Pf3  = 0xf3 // xmm escape 2: f3 0f
+	Pf2  = 0xf2 // xmm escape 1: f2 0f // JAMLEE: 例如 0xf20f58 代表 ADDPD。
+	Pf3  = 0xf3 // xmm escape 2: f3 0f // JAMLEE: 例如 0xf30f58 代表 ADDPS。
 	Pef3 = 0xf5 // xmm escape 2 with 16-bit prefix: 66 f3 0f
 	Pq3  = 0x67 // xmm escape 3: 66 48 0f
 	Pq4  = 0x68 // xmm escape 4: 66 0F 38
@@ -297,20 +313,22 @@ const (
 	Pq5  = 0x6a // xmm escape 5: F3 0F 38
 	Pq5w = 0x6b // Pq5 with Rex.w F3 0F 38
 	Pfw  = 0xf4 // Pf3 with Rex.w: f3 48 0f
-	Pw   = 0x48 // Rex.w
+	Pw   = 0x48 // Rex.w  // JAMLEE: 这种4x开头的前缀。是 REX 前缀
 	Pw8  = 0x90 // symbolic; exact value doesn't matter
-	Py   = 0x80 // defaults to 64-bit mode
+	Py   = 0x80 // defaults to 64-bit mode // JAMLEE: Py Py1 Py3 是没有的前缀的，最终会被doasm替换位空。
 	Py1  = 0x81 // symbolic; exact value doesn't matter
 	Py3  = 0x83 // symbolic; exact value doesn't matter
-	Pavx = 0x84 // symbolic: exact value doesn't matter
+	Pavx = 0x84 // symbolic: exact value doesn't matter // JAMLEE: 意思就是指 avx 前缀指令。这个前缀比较特殊。且这种前缀没有添加到机器码中
 
-	RxrEvex = 1 << 4 // AVX512 extension to REX.R/VEX.R
-	Rxw     = 1 << 3 // =1, 64-bit operand size
-	Rxr     = 1 << 2 // extend modrm reg
-	Rxx     = 1 << 1 // extend sib index
-	Rxb     = 1 << 0 // extend modrm r/m, sib base, or opcode reg
+	// JAMLEE: REX 的4位标志位。W R X B。但是这里只有后面4位
+	RxrEvex = 1 << 4 // AVX512 extension to REX.R/VEX.R // JAMLEE: 0x4F ? 暂时不确定
+	Rxw     = 1 << 3 // =1, 64-bit operand size // JAMLEE: 0x48
+	Rxr     = 1 << 2 // extend modrm reg // JAMLEE: 0x44
+	Rxx     = 1 << 1 // extend sib index // JAMLEE: 0x42
+	Rxb     = 1 << 0 // extend modrm r/m, sib base, or opcode reg // JAMLEE: 0x40
 )
 
+// JAMLEE: 为指令设置 vex 前缀。在 avx_optabs.go 里才用用到
 const (
 	// Encoding for VEX prefix in tables.
 	// The P, L, and W fields are chosen to match
@@ -349,6 +367,7 @@ var reg [MAXREG]int
 
 var regrex [MAXREG + 1]int
 
+// JAMLEE: ynone 代表没有操作参数
 var ynone = []ytab{
 	{Zlit, 1, argList{}},
 }
@@ -385,6 +404,8 @@ var yxorb = []ytab{
 	{Zm_r, 1, argList{Ymb, Yrb}},
 }
 
+// JAMLEE: zib 指立即数 8 位，zil 指立即数 32位。zilo 指立即数 ？。zoffset 表示在 opBytes[] 中的位置, zoffset 也能说明op是1字节还是
+// 2 字节。
 var yaddl = []ytab{
 	{Zibo_m, 2, argList{Yi8, Yml}},
 	{Zil_, 1, argList{Yi32, Yax}},
@@ -469,11 +490,13 @@ var ymovl = []ytab{
 	{Zaut_r, 2, argList{Yiauto, Yrl}},
 }
 
+// JAMLEE: ret 指令只有两种形式
 var yret = []ytab{
 	{Zo_iw, 1, argList{}},
 	{Zo_iw, 1, argList{Yi32}},
 }
 
+// JAMLEE: 比如 mvoq 有很多中参数形式
 var ymovq = []ytab{
 	// valid in 32-bit mode
 	{Zm_r_xm_nr, 1, argList{Ym, Ymr}},  // 0x6f MMX MOVQ (shorter encoding)
@@ -863,6 +886,9 @@ var ysha1rnds4 = []ytab{
 	{Zibm_r, 2, argList{Yu2, Yxm, Yxr}},
 }
 
+// JAMLEE: oclass 是计算 ytype（p.From and p.To 的类型） 用的。optab 的第二个字段是 ytab。这里的 opBytes定义呢？
+// opBytes 是从 offset 来计算。也会看ytab之前的offset。
+
 // You are doasm, holding in your hand a *obj.Prog with p.As set to, say,
 // ACRC32, and p.From and p.To as operands (obj.Addr).  The linker scans optab
 // to find the entry with the given p.As and then looks through the ytable for
@@ -906,7 +932,7 @@ var ysha1rnds4 = []ytab{
 //
 //        Yi8, Yml -> Zibo_m, z (0x83, 00)
 //        Yi32, Yax -> Zil_, z+2 (0x05)
-//        Yi32, Yml -> Zilo_m, z+2+1 (0x81, 0x00)
+//        Yi32, Yml -> Zilo_m, z+2+1 (0x81, 0x00) // JAMLEE: 会加上之前的 offset。
 //        Yrl, Yml -> Zr_m, z+2+1+2 (0x01)
 //        Yml, Yrl -> Zm_r, z+2+1+2+1 (0x03)
 //
@@ -2230,6 +2256,7 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	}
 }
 
+// JAMLEE: 对 ctxt 进行一些初始化操作。opindex, ycover, regrex。和机器码表看起来有些关系。看起来没有初始化一些内容到 ctxt 上。
 func instinit(ctxt *obj.Link) {
 	if ycover[0] != 0 {
 		// Already initialized; stop now.
@@ -2243,6 +2270,7 @@ func instinit(ctxt *obj.Link) {
 		plan9privates = ctxt.Lookup("_privates")
 	}
 
+	// JAMLEE: avxOptab, intel 的 vex 指令
 	for i := range avxOptab {
 		c := avxOptab[i].as
 		if opindex[c&obj.AMask] != nil {
@@ -2754,6 +2782,7 @@ func oclassVMem(ctxt *obj.Link, addr *obj.Addr) (int, bool) {
 	return Yxxx, false
 }
 
+// JAMLEE: 用于计算 ytype
 func oclass(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 	switch a.Type {
 	case obj.TYPE_REGLIST:
@@ -4205,6 +4234,7 @@ func avx512gatherValid(ctxt *obj.Link, p *obj.Prog) bool {
 	return true
 }
 
+// JAMLEE: 有些前缀定义不符合实际的 opcode 会在这里函数里被替换。
 func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 	o := opindex[p.As&obj.AMask]
 
@@ -4275,6 +4305,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 		args = append(args, tt)
 	}
 
+	// JAMLEE: 这里 o 是指一个 opcode
 	for _, yt := range o.ytab {
 		// ytab matching is purely args-based,
 		// but AVX512 suffixes like "Z" or "RU_SAE" will
@@ -4294,6 +4325,7 @@ func (ab *AsmBuf) doasm(ctxt *obj.Link, cursym *obj.LSym, p *obj.Prog) {
 				continue
 			}
 
+			// JAMLEE: 这里还会对前面定义的前缀进行替换处理。没有的前缀就被直接丢弃了
 			switch o.prefix {
 			case Px1: // first option valid only in 32-bit mode
 				if ctxt.Arch.Family == sys.AMD64 && z == 0 {

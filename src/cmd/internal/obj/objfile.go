@@ -82,7 +82,7 @@ func newObjWriter(ctxt *Link, b *bufio.Writer, pkgpath string) *objWriter {
 	}
 }
 
-// JAMLEE: bout 显示是 34。所以在调用这个函数以前，头已经写入到 obj 文件中了。
+// JAMLEE: bout size显示是 34。所以在调用这个函数以前，头已经写入到 obj 文件中了。
 func WriteObjFile(ctxt *Link, bout *bio.Writer, pkgpath string) {
 	// JAMLEE: 如果是 go115 新的对象格式。则换一个方法。
 	if ctxt.Flag_go115newobj {
@@ -232,6 +232,7 @@ func (w *objWriter) writeRefs(s *LSym) {
 	}
 }
 
+// JAMLEE: 在 Link 结构体中处理反汇编的信息
 func (ctxt *Link) writeSymDebug(s *LSym) {
 	ctxt.writeSymDebugNamed(s, s.Name)
 }

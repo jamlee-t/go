@@ -41,6 +41,7 @@ import (
 	"sync"
 )
 
+// JAMLEE: Addr 是机器代码中的操作数指定。
 // An Addr is an argument to an instruction.
 // The general forms and their encodings are:
 //
@@ -375,11 +376,12 @@ const (
 	AMask          = AllowedOpCodes - 1 // AND with this to use the opcode as an array index.
 )
 
+// JAMLEE: LSym 可以理解为 Link Sym。
 // An LSym is the sort of symbol that is written to an object file.
 // It represents Go symbols in a flat pkg+"."+name namespace.
 type LSym struct {
 	Name string
-	Type objabi.SymKind
+	Type objabi.SymKind // JAMLEE: link 符号类型
 	Attribute
 
 	RefIdx int // Index of this symbol in the symbol reference list.
@@ -643,12 +645,13 @@ type Pcdata struct {
 	P []byte
 }
 
+// JAMLEE: Link 是核心对象。
 // Link holds the context for writing object code from a compiler
 // to be linker input or for reading that input into the linker.
 type Link struct {
 	Headtype           objabi.HeadType
 	Arch               *LinkArch  // JAMLEE: 这里和编译过程用到的那个 Arch 还不一样。这个没有 Instruction 数组
-	Debugasm           int
+	Debugasm           int // JAMLEE: 设置 Debugasm，编译时输出汇编语句
 	Debugvlog          bool
 	Debugpcln          string
 	Flag_shared        bool
@@ -659,7 +662,7 @@ type Link struct {
 	Flag_go115newobj   bool // use new object file format
 	Retpoline          bool // emit use of retpoline stubs for indirect jmp/call
 	Bso                *bufio.Writer // JAMLEE: 写入 output 文件
-	Pathname           string
+	Pathname           string // JAMLEE: pwd，当前工作目录
 	hashmu             sync.Mutex       // protects hash, funchash
 	hash               map[string]*LSym // name -> sym mapping
 	funchash           map[string]*LSym // name -> sym mapping for ABIInternal syms
@@ -731,6 +734,7 @@ func (ctxt *Link) FixedFrameSize() int64 {
 	}
 }
 
+// JAMLEE: 单独的体系架构，继承自 cmd.sys.Arch。Init，Preprocess，Assemble，Progedit 方法。四个方法是干嘛呢？
 // LinkArch is the definition of a single architecture.
 type LinkArch struct {
 	*sys.Arch

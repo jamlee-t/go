@@ -10,6 +10,7 @@ const argListMax int = 6
 
 type argList [argListMax]uint8
 
+// JAMLEE: 每个指令都会对应 1 个 ytab 数组。
 type ytab struct {
 	zcase   uint8
 	zoffset uint8

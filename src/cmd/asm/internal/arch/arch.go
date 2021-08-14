@@ -49,6 +49,7 @@ func nilRegisterNumber(name string, n int16) (int16, bool) {
 	return 0, false
 }
 
+// JAMLEE: 这个 Arch 的继承关系是 asm.internal.arch.Arch --> internal.obj.LinkArch --> internal.sys.Arch
 // Set configures the architecture specified by GOARCH and returns its representation.
 // It returns nil if GOARCH is not recognized.
 func Set(GOARCH string) *Arch {
@@ -56,6 +57,7 @@ func Set(GOARCH string) *Arch {
 	case "386":
 		return archX86(&x86.Link386)
 	case "amd64":
+		// JAMLEE: 返回 amd64 的架构 asm.internal.arch.Arch
 		return archX86(&x86.Linkamd64)
 	case "arm":
 		return archArm()
@@ -100,8 +102,9 @@ func jumpWasm(word string) bool {
 	return word == "JMP" || word == "CALL" || word == "Call" || word == "Br" || word == "BrIf"
 }
 
-// JAMLEE: 处理一些汇编的简写和别名
+// JAMLEE: 处理一些汇编的简写和别名, 因为 arch.Arch 继承 obj.LinkArch, 还有额外字段
 func archX86(linkArch *obj.LinkArch) *Arch {
+	// JAMLEE: 定义 register 和 instructions 两个 map。默认定义的原材料取自 internal.obj.x86
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	for i, s := range x86.Register {

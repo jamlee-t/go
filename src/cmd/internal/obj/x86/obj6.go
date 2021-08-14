@@ -1240,6 +1240,7 @@ var unaryDst = map[obj.As]bool{
 	AXSAVES:     true,
 }
 
+// JAMLEE: 定义 Linkamd64 的默认初始值。
 var Linkamd64 = obj.LinkArch{
 	Arch:           sys.ArchAMD64,
 	Init:           instinit,

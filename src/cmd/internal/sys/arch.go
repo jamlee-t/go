@@ -24,6 +24,7 @@ const (
 	Wasm
 )
 
+// JAMLEE: 定义1个独立的 Arch
 // Arch represents an individual architecture.
 type Arch struct {
 	Name   string
