@@ -20,7 +20,7 @@ import (
 )
 
 // "Portable" code generation.
-
+// JAMLEE: 生成代码时的工作进程数量。
 var (
 	nBackendWorkers int     // number of concurrent backend workers, set by a compiler flag
 	compilequeue    []*Node // functions waiting to be compiled
@@ -192,6 +192,7 @@ func (s *ssafn) AllocFrame(f *ssa.Func) {
 	s.stkptrsize = Rnd(s.stkptrsize, int64(Widthreg))
 }
 
+// JAMLEE: 编译函数 node，因为指令只会存在在函数体中，go 里面在函数体外部运行语句是不合法的。
 func funccompile(fn *Node) {
 	if Curfn != nil {
 		Fatalf("funccompile %v inside %v", fn.Func.Nname.Sym, Curfn.Func.Nname.Sym)
@@ -278,6 +279,7 @@ func compile(fn *Node) {
 	}
 }
 
+// JAMLEE: 是否是即时编译。负责采用 compilequeue 的方式。
 // compilenow reports whether to compile immediately.
 // If functions are not compiled immediately,
 // they are enqueued in compilequeue,
@@ -340,6 +342,7 @@ func compileSSA(fn *Node, worker int) {
 		return
 	}
 
+	// JAMLEE: 这个就是生成机器代码的入口。在gc中是通过它走到机器代码生成的。
 	pp.Flush() // assemble, fill in boilerplate, etc.
 	// fieldtrack must be called after pp.Flush. See issue 20014.
 	fieldtrack(pp.Text.From.Sym, fn.Func.FieldTrack)

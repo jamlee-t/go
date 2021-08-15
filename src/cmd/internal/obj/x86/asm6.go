@@ -361,8 +361,10 @@ const (
 	vex0F3A = 3 << 3
 )
 
+// JAMLEE: 1个指令有多个参数模式。
 var ycover [Ymax * Ymax]uint8
 
+// JAMLEE: reg 和 regrex 存储寄存器列表。
 var reg [MAXREG]int
 
 var regrex [MAXREG + 1]int
@@ -2067,6 +2069,7 @@ type nopPad struct {
 	n int32     // Size of the pad
 }
 
+// JAMLEE: 汇编处理的入口
 func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	pjc := makePjcCtx(ctxt)
 
@@ -2258,7 +2261,7 @@ func span6(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
 	}
 }
 
-// JAMLEE: 对 ctxt 进行一些初始化操作。opindex, ycover, regrex。和机器码表看起来有些关系。看起来没有初始化一些内容到 ctxt 上。
+// JAMLEE: instinit，对internal.obj.x86包里的全局变量进行一些初始化操作。opindex, ycover, regrex。和机器码表看起来有些关系。看起来没有初始化一些内容到 ctxt 上。
 func instinit(ctxt *obj.Link) {
 	if ycover[0] != 0 {
 		// Already initialized; stop now.

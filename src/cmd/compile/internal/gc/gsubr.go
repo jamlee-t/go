@@ -39,6 +39,7 @@ import (
 
 var sharedProgArray = new([10000]obj.Prog) // *T instead of T to work around issue 19839
 
+// JAMLEE: Prog 就是汇编指令的存储结构体。以单向链表的方式存储。Progs 应该是指一个函数才对。
 // Progs accumulates Progs for a function and converts them into machine code.
 type Progs struct {
 	Text      *obj.Prog  // ATEXT Prog for this function
@@ -91,6 +92,7 @@ func (pp *Progs) NewProg() *obj.Prog {
 	return p
 }
 
+// JAMLEE: pp 转换为machine code。
 // Flush converts from pp to machine code.
 func (pp *Progs) Flush() {
 	plist := &obj.Plist{Firstpc: pp.Text, Curfn: pp.curfn}

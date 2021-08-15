@@ -24,7 +24,7 @@ const (
 	Wasm
 )
 
-// JAMLEE: 定义1个独立的 Arch
+// JAMLEE: 定义1个独立的 Arch。会被 LinkArch 继承。
 // Arch represents an individual architecture.
 type Arch struct {
 	Name   string
@@ -63,6 +63,7 @@ var Arch386 = &Arch{
 	MinLC:     1,
 }
 
+// JAMLEE: 在这里直接定义了 PtrSize 和 RegSize 的指为 8。
 var ArchAMD64 = &Arch{
 	Name:      "amd64",
 	Family:    AMD64,

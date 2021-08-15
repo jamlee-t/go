@@ -11,6 +11,7 @@ import (
 
 var leaptr = x86.ALEAQ
 
+// JAMLEE: gc.Arch 。类似的 asm 里面也有这个扩展自己的 Arch 结构。将机器代码转换的能力放到中。这里是 x86.Linkamd64 中关联的span6方法。
 func Init(arch *gc.Arch) {
 	arch.LinkArch = &x86.Linkamd64
 	arch.REGSP = x86.REGSP

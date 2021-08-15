@@ -22,6 +22,7 @@ import (
 	"os"
 )
 
+// JAMLEE: 不通arch的列表。基本的情况都是选 amd64 (linux和mac)
 var archInits = map[string]func(*gc.Arch){
 	"386":      x86.Init,
 	"amd64":    amd64.Init,
@@ -43,6 +44,7 @@ func main() {
 	log.SetFlags(0)
 	log.SetPrefix("compile: ")
 
+	// JAMLEE: archInit 选中的是 amd64.Init 方法。用于初始化体系结构。
 	archInit, ok := archInits[objabi.GOARCH]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "compile: unknown architecture %q\n", objabi.GOARCH)

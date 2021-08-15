@@ -12,6 +12,7 @@ import (
 	"os"
 )
 
+// JAMLEE: 架构结构体初始化函数，但是这是 i386 的。
 func Init(arch *gc.Arch) {
 	arch.LinkArch = &x86.Link386
 	arch.REGSP = x86.REGSP

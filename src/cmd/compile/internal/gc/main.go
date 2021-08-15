@@ -149,6 +149,7 @@ func Main(archInit func(*Arch)) {
 
 	defer hidePanic()
 
+	// JAMLEE: 使用 compile/internal/amd64/galign.go 中 amd64.Init
 	archInit(&thearch)
 
 	// JAMLEE: Link holds the context for writing object code from a compiler
@@ -204,6 +205,7 @@ func Main(archInit func(*Arch)) {
 	// pseudo-package used for methods with anonymous receivers
 	gopkg = types.NewPkg("go", "")
 
+	// JAMLEE: 编译目标是否是 wasm 目标。
 	Wasm := objabi.GOARCH == "wasm"
 
 	// Whether the limit for stack-allocated objects is much smaller than normal.
@@ -227,7 +229,10 @@ func Main(archInit func(*Arch)) {
 	objabi.Flagcount("W", "debug parse tree after type checking", &Debug['W'])
 	flag.StringVar(&asmhdr, "asmhdr", "", "write assembly header to `file`")
 	flag.StringVar(&buildid, "buildid", "", "record `id` as the build id in the export metadata")
+
+	// JAMLEE: 用多少个后端进程处理。
 	flag.IntVar(&nBackendWorkers, "c", 1, "concurrency during compilation, 1 means no concurrency")
+
 	flag.BoolVar(&pure_go, "complete", false, "compiling complete package (no C or assembly)")
 	flag.StringVar(&debugstr, "d", "", "print debug information about items in `list`; try -d help")
 	flag.BoolVar(&flagDWARF, "dwarf", !Wasm, "generate DWARF symbols")
@@ -288,6 +293,7 @@ func Main(archInit func(*Arch)) {
 
 	objabi.Flagparse(usage)
 
+	// JAMLEE: 是否处理 x86 的 spectre 漏洞。
 	for _, f := range strings.Split(spectre, ",") {
 		f = strings.TrimSpace(f)
 		switch f {
@@ -314,16 +320,19 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// JAMLEE: recordFlags 是用来记录一些flag用于放入在调试信息中。
 	// Record flags that affect the build result. (And don't
 	// record flags that don't, since that would cause spurious
 	// changes in the binary.)
 	recordFlags("B", "N", "l", "msan", "race", "shared", "dynlink", "dwarflocationlists", "dwarfbasentries", "smallframes", "spectre", "go115newobj")
 
+	// JAMLEE: 如果 smallFrames 特性开启了就设置下全局变量。
 	if smallFrames {
 		maxStackVarSize = 128 * 1024
 		maxImplicitStackVarSize = 16 * 1024
 	}
 
+	// JAMLEE: 动态库相关的配置。
 	Ctxt.Flag_shared = flag_dynlink || flag_shared
 	Ctxt.Flag_dynlink = flag_dynlink
 	Ctxt.Flag_optimize = Debug['N'] == 0
@@ -355,9 +364,11 @@ func Main(archInit func(*Arch)) {
 		readSymABIs(symabisPath, myimportpath)
 	}
 
+	// JAMLEE: 使用 LinkArch 的 Init 方法，设置为 instinit 。
+	// JAMLEE: instinit，对internal.obj.x86包里的全局变量进行一些初始化操作。opindex, ycover, regrex。和机器码表看起来有些关系。看起来没有初始化一些内容到 ctxt 上。
 	thearch.LinkArch.Init(Ctxt)
 
-	// JAMLEE: 拼接出 .o 后缀文件的输出文件地址
+	// JAMLEE: 拼接出 .o 后缀文件的输出文件地址，如果没有指定的话。
 	if outfile == "" {
 		p := flag.Arg(0)
 		if i := strings.LastIndex(p, "/"); i >= 0 {
@@ -380,6 +391,8 @@ func Main(archInit func(*Arch)) {
 
 	startProfile()
 
+	// JAMLEE: -race, 例如可以使用go run -race 或者 go build -race 来进行竞争检测。 golang语言内部大概的实现就是同时开启多个goroutine执行同一个命令，并且纪录每个变量的状态
+	// -mscan, build code compatible with C/C++ memory sanitizer
 	if flag_race && flag_msan {
 		log.Fatal("cannot use both -race and -msan")
 	}
@@ -387,6 +400,7 @@ func Main(archInit func(*Arch)) {
 		// -race and -msan imply -d=checkptr for now.
 		Debug_checkptr = 1
 	}
+	// JAMLEE: 如果 myimportpath 是不能开启 race 或者 msan 的包的话。
 	if ispkgin(omit_pkgs) {
 		flag_race = false
 		flag_msan = false
@@ -401,6 +415,7 @@ func Main(archInit func(*Arch)) {
 		instrumenting = true
 	}
 
+	// JAMLEE: compiling_runtime 和 禁止优化不能同时存在。
 	if compiling_runtime && Debug['N'] != 0 {
 		log.Fatal("cannot disable optimizations while compiling runtime")
 	}
@@ -414,6 +429,7 @@ func Main(archInit func(*Arch)) {
 		log.Fatalf("location lists requested but register mapping not available on %v", Ctxt.Arch.Name)
 	}
 
+	// JAMLEE: debug string 默认先不管他了。
 	// parse -d argument
 	if debugstr != "" {
 	Split:
@@ -532,9 +548,11 @@ func Main(archInit func(*Arch)) {
 
 	trackScopes = flagDWARF
 
+	// JAMLEE: Widthptr 和 Widthreg 。int 的 8 字节和通用reg 的 8 字节。
 	Widthptr = thearch.LinkArch.PtrSize
 	Widthreg = thearch.LinkArch.RegSize
 
+	// JAMLEE: 初始化 types 包。
 	// initialize types package
 	// (we need to do this to break dependencies that otherwise
 	// would lead to import cycles)
@@ -765,6 +783,7 @@ func Main(archInit func(*Arch)) {
 		fninit(xtop)
 	}
 
+	// JAMLEE: 做并行编译的方式。目前似乎没有用到。
 	compileFunctions()
 
 	if nowritebarrierrecCheck != nil {

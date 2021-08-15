@@ -253,7 +253,7 @@ const (
 
 	REG_TLS
 
-	MAXREG
+	MAXREG // JAMLEE: 最大的寄存器编号
 
 	REG_CR = REG_CR0
 	REG_DR = REG_DR0
@@ -277,6 +277,7 @@ const (
 	T_GOTYPE = 1 << 7
 )
 
+// JAMLEE: 64 位的 DWARF
 // https://www.uclibc.org/docs/psABI-x86_64.pdf, figure 3.36
 var AMD64DWARFRegisters = map[int16]int16{
 	REG_AX:  0,
@@ -373,6 +374,7 @@ var AMD64DWARFRegisters = map[int16]int16{
 	REG_K7: 125,
 }
 
+// JAMLEE: 32 位的 DWARF
 // https://www.uclibc.org/docs/psABI-i386.pdf, table 2.14
 var X86DWARFRegisters = map[int16]int16{
 	REG_AX: 0,
