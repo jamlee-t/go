@@ -119,6 +119,7 @@ func (ctxt *Link) Lookup(name string) *LSym {
 	return ctxt.LookupInit(name, nil)
 }
 
+// JAMLEE: 从 hash 里查找 LSym。没有则创建
 // LookupInit looks up the symbol with name name.
 // If it does not exist, it creates it and
 // passes it to init for one-time initialization.

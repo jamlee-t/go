@@ -6,6 +6,7 @@ package objabi
 
 import "strings"
 
+// JAMLEE: 路径中的编码转换
 // PathToPrefix converts raw string to the prefix that will be used in the
 // symbol table. All control characters, space, '%' and '"', as well as
 // non-7-bit clean bytes turn into %xx. The period needs escaping only in the

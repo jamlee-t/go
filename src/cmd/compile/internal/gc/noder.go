@@ -142,7 +142,7 @@ type noder struct {
 
 	file       *syntax.File // JAMLEE: 对应syntax包语法树解析的文件
 	linknames  []linkname
-	pragcgobuf [][]string
+	pragcgobuf [][]string   // JAMLEE: prag cgo buf。这个单词应该这么理解
 	err        chan syntax.Error
 	scope      ScopeID
 

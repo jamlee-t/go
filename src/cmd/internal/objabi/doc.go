@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// JAMLEE: 这里有 3 个独立实现的 obj file format。
 // NOTE: There are *three* independent implementations of this object
 // file format in the Go source tree:
 //
@@ -41,7 +42,7 @@
 //	- sequence of defined symbols
 //	- byte 0xff (marks end of sequence)
 //	- magic footer: "\xffgo114ld"
-//
+// JAMLEE: zigzag 还有 varint 是一种压缩格式
 // All integers are stored in a zigzag varint format.
 // See golang.org/s/go12symtab for a definition.
 //

@@ -62,6 +62,7 @@ func autoexport(n *Node, ctxt Class) {
 	}
 }
 
+// JAMLEE: 生成 __.PKGDEF 文件的内容部分。
 func dumpexport(bout *bio.Writer) {
 	// The linker also looks for the $$ marker - use char after $$ to distinguish format.
 	exportf(bout, "\n$$B\n") // indicate binary export format

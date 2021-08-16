@@ -56,6 +56,8 @@ const (
 	SNOPTRBSS
 	// Thread-local data that is initially all 0s
 	STLSBSS
+
+	// JAMLEE: 用于 debug 的数据信息。在 obj 也算是一种符号。
 	// Debugging data
 	SDWARFINFO
 	SDWARFRANGE

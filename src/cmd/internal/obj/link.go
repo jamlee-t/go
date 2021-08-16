@@ -682,6 +682,7 @@ type Link struct {
 	UseBASEntries        bool // use Base Address Selection Entries in location lists and PC ranges
 	IsAsm                bool // is the source assembly language, which may contain surprising idioms (e.g., call tables)
 
+	// JAMLEE: 用于写入obj文件的数据资料
 	// state for writing objects
 	Text []*LSym
 	Data []*LSym

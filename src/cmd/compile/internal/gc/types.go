@@ -8,6 +8,7 @@ import (
 	"cmd/compile/internal/types"
 )
 
+// JAMLEE: type 类型别名定义
 // convenience constants
 const (
 	Txxx = types.Txxx

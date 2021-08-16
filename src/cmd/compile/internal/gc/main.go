@@ -625,6 +625,7 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// JAMLEE: 检查变量赋值。
 	// Phase 2: Variable assignments.
 	//   To check interface assignments, depends on phase 1.
 
@@ -759,7 +760,7 @@ func Main(archInit func(*Arch)) {
 	// can trigger function compilation.
 	initssaconfig()
 
-	// JAMLEE: itabs 是什么专业术语?
+	// JAMLEE: itabs 是什么专业术语? i 是指 interface。
 	// Just before compilation, compile itabs found on
 	// the right side of OCONVIFACE so that methods
 	// can be de-virtualized during compilation.
@@ -1549,6 +1550,7 @@ func recordFlags(flags ...string) {
 	s.P = cmd.Bytes()[1:]
 }
 
+// JAMLEE: 存储包名在调试信息符号中(ctxt)
 // recordPackageName records the name of the package being
 // compiled, so that the linker can save it in the compile unit's DIE.
 func recordPackageName() {

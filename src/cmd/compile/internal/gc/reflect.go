@@ -17,6 +17,7 @@ import (
 	"sync"
 )
 
+// JAMLEE: itab 是指 interface tab
 type itabEntry struct {
 	t, itype *types.Type
 	lsym     *obj.LSym // symbol of the itab itself
@@ -27,6 +28,7 @@ type itabEntry struct {
 	entries []*obj.LSym
 }
 
+// JAMLEE: 定义符号和类型。p 代表 package。During parsing, storage classes are called declaration contexts。表示全局变量，函数名之类的 context
 type ptabEntry struct {
 	s *types.Sym
 	t *types.Type

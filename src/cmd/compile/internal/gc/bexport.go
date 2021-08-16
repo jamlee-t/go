@@ -88,7 +88,7 @@ const deltaNewFile = -64
 
 // ----------------------------------------------------------------------------
 // Export format
-
+// JAMLEE: export 用到的类型 tag。
 // Tags. Must be < 0.
 const (
 	// Objects

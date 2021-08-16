@@ -43,8 +43,10 @@ const (
 	modeLinkerObj
 )
 
+// JAMLEE: 写入 goobj 文件的核心方法。
 func dumpobj() {
 	if linkobj == "" {
+		// JAMLEE: __.PKGDEF(compilerObj) _go_.o(modeLinkerObj)
 		dumpobj1(outfile, modeCompilerObj|modeLinkerObj)
 		return
 	}
@@ -62,6 +64,7 @@ func dumpobj1(outfile string, mode int) {
 	defer bout.Close()
 	bout.WriteString("!<arch>\n")
 
+	// JAMLEE: 写入文件。也可以把linkerobj单独写一个文件：-linkobj link.goobj -o parse_demo.o /Volumes/code/code/go/src/0_note/demo/data/parse_demo.go
 	if mode&modeCompilerObj != 0 {
 		start := startArchiveEntry(bout)
 		dumpCompilerObj(bout)
@@ -85,12 +88,14 @@ func printObjHeader(bout *bio.Writer) {
 	fmt.Fprintf(bout, "\n") // header ends with blank line
 }
 
+// JAMLEE: 写入一个新的 ar 条目的额为您推荐头
 func startArchiveEntry(bout *bio.Writer) int64 {
 	var arhdr [ArhdrSize]byte
 	bout.Write(arhdr[:])
 	return bout.Offset()
 }
 
+// JAMLEE: 完成一个ar条目文件
 func finishArchiveEntry(bout *bio.Writer, start int64, name string) {
 	bout.Flush()
 	size := bout.Offset() - start
@@ -106,7 +111,9 @@ func finishArchiveEntry(bout *bio.Writer, start int64, name string) {
 	bout.MustSeek(start+size+(size&1), 0)
 }
 
+// JAMLEE: 产出 __.PKGDEF 格式的文件，里面是符号信息。在编译的时刻会被用到。
 func dumpCompilerObj(bout *bio.Writer) {
+	// JAMLEE: 在 goobj2 的格式上，添加这个 objheader。无论是 linker obj 还是 compiler obj 都会有这个header。
 	printObjHeader(bout)
 	dumpexport(bout)
 }
@@ -152,8 +159,10 @@ func dumpdata() {
 }
 
 func dumpLinkerObj(bout *bio.Writer) {
+	// JAMLEE: 在 goobj2 的格式上，添加这个 objheader。无论是 linker obj 还是 compiler obj 都会有这个header。
 	printObjHeader(bout)
 
+	// JAMLEE: 如果有 cgo 相关的。暂时不知道这个 cgo buf 的用途。
 	if len(pragcgobuf) != 0 {
 		// write empty export section; must be before cgo section
 		fmt.Fprintf(bout, "\n$$\n\n$$\n\n")
@@ -170,6 +179,7 @@ func dumpLinkerObj(bout *bio.Writer) {
 }
 
 func addptabs() {
+	// JAMLEE: Flag_dynlink 是否开启动态link才有这个内容。
 	if !Ctxt.Flag_dynlink || localpkg.Name != "main" {
 		return
 	}

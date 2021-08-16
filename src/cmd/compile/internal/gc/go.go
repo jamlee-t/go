@@ -59,6 +59,7 @@ func isReflectPkg(p *types.Pkg) bool {
 // called declaration contexts.
 type Class uint8
 
+// JAMLEE: 这里的命名和P有什么关系呢。
 //go:generate stringer -type=Class
 const (
 	Pxxx      Class = iota // no class; used during ssa conversion to indicate pseudo-variables
@@ -98,6 +99,7 @@ var (
 	sizeofString int64
 )
 
+// JAMLEE: prag cgo buf。这个单词应该这么理解
 var pragcgobuf [][]string
 
 var outfile string
