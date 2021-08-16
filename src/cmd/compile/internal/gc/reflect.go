@@ -1418,7 +1418,7 @@ func dtypesym(t *types.Type) *obj.LSym {
 func peekitabs() {
 	for i := range itabs {
 		tab := &itabs[i]
-		methods := genfun(tab.t, tab.itype)
+		methods := genfun(tab.t, tab.itype) // JAMLEE: 生成函数里面会调用生成机器码的功能。
 		if len(methods) == 0 {
 			continue
 		}

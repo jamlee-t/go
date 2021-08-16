@@ -764,7 +764,7 @@ func Main(archInit func(*Arch)) {
 	// the right side of OCONVIFACE so that methods
 	// can be de-virtualized during compilation.
 	Curfn = nil
-	peekitabs()
+	peekitabs() // JAMLEE: 编译成机器代码会在这里执行。会调用到 span6, 这里和下面的 funccompile 的函数调用有疑问。
 
 	// Phase 8: Compile top level functions.
 	// Don't use range--walk can add functions to xtop.
@@ -773,7 +773,7 @@ func Main(archInit func(*Arch)) {
 	for i := 0; i < len(xtop); i++ {
 		n := xtop[i]
 		if n.Op == ODCLFUNC {
-			funccompile(n) // JAMLEE: 函数编译，替换就是在这里做的
+			funccompile(n) // JAMLEE: 函数编译, 替换就是在这里做的。会调用到 span6
 			fcount++
 		}
 	}

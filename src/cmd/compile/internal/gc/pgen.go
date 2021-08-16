@@ -218,6 +218,7 @@ func funccompile(fn *Node) {
 	dclcontext = PAUTO
 	Curfn = fn
 
+	// JAMLEE: 编译函数
 	compile(fn)
 
 	Curfn = nil
@@ -272,8 +273,9 @@ func compile(fn *Node) {
 		}
 	}
 
+	// JAMLEE: 是否是单线程编译或者是多个线程编译
 	if compilenow(fn) {
-		compileSSA(fn, 0)
+		compileSSA(fn, 0) // JAMLEE: 核心编译方法
 	} else {
 		compilequeue = append(compilequeue, fn)
 	}
@@ -311,12 +313,13 @@ func isInlinableButNotInlined(fn *Node) bool {
 
 const maxStackSize = 1 << 30
 
-// JAMLEE: 处理 ssa 的入口
+// JAMLEE: 处理 ssa 的入口。worker 的值为 0 更容易分析。
 // compileSSA builds an SSA backend function,
 // uses it to generate a plist,
 // and flushes that plist to machine code.
 // worker indicates which of the backend workers is doing the processing.
 func compileSSA(fn *Node, worker int) {
+	// JAMLEE: f 是 ssa.Func
 	f := buildssa(fn, worker)
 	// Note: check arg size to fix issue 25507.
 	if f.Frontend().(*ssafn).stksize >= maxStackSize || fn.Type.ArgWidth() >= maxStackSize {

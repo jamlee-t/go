@@ -58,6 +58,7 @@ type Progs struct {
 // worker indicates which of the backend workers will use the Progs.
 func newProgs(fn *Node, worker int) *Progs {
 	pp := new(Progs)
+	// JAMLEE: 是否可以重用 progs
 	if Ctxt.CanReuseProgs() {
 		sz := len(sharedProgArray) / nBackendWorkers
 		pp.progcache = sharedProgArray[sz*worker : sz*(worker+1)]

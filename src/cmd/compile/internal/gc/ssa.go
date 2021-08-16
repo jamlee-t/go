@@ -37,6 +37,7 @@ const maxOpenDefers = 8
 // ssaDumpInlined holds all inlined functions when ssaDump contains a function name.
 var ssaDumpInlined []*Node
 
+// JAMLEE: 执行 ssa 步骤前，需要初始化 ssaconfig。
 func initssaconfig() {
 	types_ := ssa.NewTypes()
 
@@ -5929,6 +5930,7 @@ func emitStackObjects(e *ssafn, pp *Progs) {
 	}
 }
 
+// JAMLEE: ssa 转换为 pp 的形式。
 // genssa appends entries to pp for each instruction in f.
 func genssa(f *ssa.Func, pp *Progs) {
 	var s SSAGenState
