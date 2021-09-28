@@ -15,6 +15,7 @@ import (
 	"sort"
 )
 
+// JAMLEE: 组织为树结构。左子树和右子树。这个树还不是完全的，例如 ODCLCONST 就是需要 typecheck 阶段解读出常量
 // A Node is a single node in the syntax tree.
 // Actually the syntax tree is a syntax DAG, because there is only one
 // node with Op=ONAME for a given instance of a variable x.
@@ -713,6 +714,7 @@ const (
 	OCOPY      // copy(Left, Right)
 	ODCL       // var Left (declares Left of type Left.Type)
 
+	// JAMLEE: 这种节点仅在解析时使用
 	// Used during parsing but don't last.
 	ODCLFUNC  // func f() or func (r) f()
 	ODCLFIELD // struct field, interface field, or func/method argument/return value.

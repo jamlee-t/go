@@ -2,7 +2,7 @@ package data
 
 import "fmt"
 
-const name = "123"
+const name = 123
 
 var func01 = func(int){}
 
@@ -11,4 +11,5 @@ func Hello() {
 		fmt.Println("World")
 	}()
 	fmt.Println("Hello")
+	fmt.Println(name)
 }
