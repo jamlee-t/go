@@ -23,8 +23,8 @@ import (
 type Node struct {
 	// Tree structure.
 	// Generic recursive walks should follow these fields.
-	Left  *Node
-	Right *Node
+	Left  *Node // JAMLEE: 左节点, 例如 常量表达式 const x = 1 的左节点就是 x = 1
+	Right *Node // JAMLEE: 右节点
 	Ninit Nodes
 	Nbody Nodes
 	List  Nodes
@@ -32,16 +32,16 @@ type Node struct {
 
 	// most nodes
 	Type *types.Type
-	Orig *Node // original form, for printing, and tracking copies of ONAMEs
+	Orig *Node // original form, for printing, and tracking copies of ONAMEs, JAMLEE: 指向原始的 node, 考虑到node的复制
 
 	// func
-	Func *Func
+	Func *Func // JAMLEE: 如果节点是函数声明的话，这个值就是存储函数的信息的
 
 	// ONAME, OTYPE, OPACK, OLABEL, some OLITERAL
-	Name *Name
+	Name *Name // JAMLEE: ONAME, OTYPE, OPACK, OLABEL, some OLITERAL 才有这个, 表示里面的值
 
-	Sym *types.Sym  // various
-	E   interface{} // Opt or Val, see methods below
+	Sym *types.Sym  // various JAMLEE: 表示变量名称
+	E   interface{} // Opt or Val, see methods below, JAMLEE: 定义节点表示的一个值。例如常量的值，在typecheck中解析
 
 	// Various. Usually an offset into a struct. For example:
 	// - ONAME nodes that refer to local variables use it to identify their stack frame position.
@@ -57,9 +57,9 @@ type Node struct {
 
 	flags bitset32
 
-	Esc uint16 // EscXXX
+	Esc uint16 // EscXXX JAMLEE: 和闭包有关?
 
-	Op  Op
+	Op  Op  // JAMLEE: 表示当前节点的类型
 	aux uint8
 }
 
