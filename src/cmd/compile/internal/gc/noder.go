@@ -53,13 +53,13 @@ func parseFiles(filenames []string) uint {
 				return
 			}
 			defer f.Close()
-
+			// JAMLEE: 🌟🌟🌟🌟🌟
 			// JAMLEE: 走到 syntax 表中，执行文件解析。File 是实现 syntax.Node 的。可以遍历语法树
 			p.file, _ = syntax.Parse(base, f, p.error, p.pragma, syntax.CheckBranches) // errors are tracked via p.error
 		}(filename)
 	}
 
-	// JAMLEE: 上面的循环代码执行没有等待完成就执行 p.node 是否合理呢
+	// JAMLEE: 上面的循环代码执行没有等待完成就执行 p.node 是否合理呢。一个 noders 是一个文件。
 	var lines uint
 	for _, p := range noders {
 		for e := range p.err {

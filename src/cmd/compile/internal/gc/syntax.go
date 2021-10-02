@@ -15,7 +15,8 @@ import (
 	"sort"
 )
 
-// JAMLEE: 组织为树结构。左子树和右子树。这个树还不是完全的，例如 ODCLCONST 就是需要 typecheck 阶段解读出常量
+// JAMLEE: 组织为树结构。左子树和右子树。这个树还不是完全的，例如 ODCLCONST 就是需要 typecheck 阶段解读出常量。我猜测节点的左右子树可能只出现
+// 在一个完整的「语句」元素，例如常量声明 const x = 1。
 // A Node is a single node in the syntax tree.
 // Actually the syntax tree is a syntax DAG, because there is only one
 // node with Op=ONAME for a given instance of a variable x.
@@ -23,10 +24,10 @@ import (
 type Node struct {
 	// Tree structure.
 	// Generic recursive walks should follow these fields.
-	Left  *Node // JAMLEE: 左节点, 例如 常量表达式 const x = 1 的左节点就是 x = 1
+	Left  *Node // JAMLEE: 左节点, 例如 常量表达式 const x = 1 的左节点就是 x = 1。节点的单位是下面 O 开头的常量。
 	Right *Node // JAMLEE: 右节点
 	Ninit Nodes
-	Nbody Nodes
+	Nbody Nodes // JAMLEE: 像函数这种, NBody 就是里面的多个语句列表
 	List  Nodes
 	Rlist Nodes
 

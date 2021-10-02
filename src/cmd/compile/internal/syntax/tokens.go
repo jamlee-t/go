@@ -6,7 +6,7 @@ package syntax
 
 type token uint
 
-// JAMLEE: token 关键字。将语言中的元素分成几个不同的类别，分别是名称和字面量、操作符、分隔符和关键字
+// JAMLEE: token 化。将语言中的元素分成几个不同的类别，分别是名称和字面量、操作符、分隔符和关键字。
 
 //go:generate stringer -type token -linecomment
 
@@ -36,7 +36,7 @@ const (
 	_Rbrack    // ]
 	_Rbrace    // }
 	_Comma     // ,
-	_Semi      // ;
+	_Semi      // ; , JAMLEE: 换行、EOF、或者 ; 都是这个类型
 	_Colon     // :
 	_Dot       // .
 	_DotDotDot // ...
@@ -147,7 +147,7 @@ const (
 	Shr    // >>
 )
 
-// Operator precedences
+// JAMLEE: 运算符优先级？OrOr ||, AndAnd &&, Cmp 比较运算，precAdd + - += ^ ++ -- 等，precMul 乘除
 const (
 	_ = iota
 	precOrOr

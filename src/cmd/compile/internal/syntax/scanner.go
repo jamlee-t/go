@@ -36,7 +36,7 @@ type scanner struct {
 	// current token, valid after calling next()
 	line, col uint
 	blank     bool // line is blank up to col
-	tok       token
+	tok       token    // JAMLEE: 当前扫描出来的 tok 结果
 	lit       string   // valid if tok is _Name, _Literal, or _Semi ("semicolon", "newline", or "EOF"); may be malformed if bad is true
 	bad       bool     // valid if tok is _Literal, true if a syntax error occurred, lit may be malformed
 	kind      LitKind  // valid if tok is _Literal
@@ -44,6 +44,7 @@ type scanner struct {
 	prec      int      // valid if tok is _Operator, _AssignOp, or _IncOp
 }
 
+// JAMLEE: mode 可以限制仅仅处理 directives 类型的注释
 func (s *scanner) init(src io.Reader, errh func(line, col uint, msg string), mode uint) {
 	s.source.init(src, errh)
 	s.mode = mode
@@ -89,29 +90,34 @@ func (s *scanner) setLit(kind LitKind, ok bool) {
 // are reported, in the same way as regular comments.
 func (s *scanner) next() {
 	nlsemi := s.nlsemi
-	s.nlsemi = false
+	s.nlsemi = false // JAMLEE: /n 和 EOF 不转换为 ;
 
 redo:
 	// skip white space
 	s.stop()
 	startLine, startCol := s.pos()
 	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !nlsemi || s.ch == '\r' {
-		s.nextch()
+		s.nextch() // JAMLEE: 空白字符忽略掉
 	}
 
 	// token start
 	s.line, s.col = s.pos()
 	s.blank = s.line > startLine || startCol == colbase
-	s.start()
-	// JAMLEE: 是否是字母。在这里组装成单词。
+	s.start() // JAMLEE: source 的方法，开始一个token分析
+
+	// JAMLEE: 是否是字母(都是转为小写字母后判断)。在这里组装成单词。s.ch 如果是换行的话
+	// 注意调用前会 先 next 一下得到一个字符，然后判读该字符。
 	if isLetter(s.ch) || s.ch >= utf8.RuneSelf && s.atIdentChar(true) {
-		s.nextch()
-		s.ident()
+		s.nextch() // 下一个字符
+		s.ident() // JAMLEE: 解析出一个 identifier
+		// JAMLEE: 打印读取到的 identifier
+		// fmt.Printf("line:%d,col: %d => %s, %s\n", s.line, s.col, s.tok.String(), s.lit) // 这里打印的是真实的文件位置
+		// JAMLEE: END
 		return
 	}
 
 	switch s.ch {
-	case -1:
+	case -1: // JAMLEE: 读为 -1 标示当前的已经是 EOF
 		if nlsemi {
 			s.lit = "EOF"
 			s.tok = _Semi
@@ -120,59 +126,59 @@ redo:
 		s.tok = _EOF
 
 	case '\n':
-		s.nextch()
+		s.nextch() // JAMLEE: 遇到 /n 处理为 _Semi 类型的 tok
 		s.lit = "newline"
 		s.tok = _Semi
 
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		s.number(false)
+		s.number(false) // JAMLEE: 转换为数字字面量
 
 	case '"':
-		s.stdString()
+		s.stdString()  // JAMLEE: 读取为字符串字面量
 
 	case '`':
-		s.rawString()
+		s.rawString()  // JAMLEE: 读取为字符串字面量，禁止转义
 
 	case '\'':
-		s.rune()
+		s.rune()       // JAMLEE: 读取为字符字面量
 
-	case '(':
+	case '(':          // JAMLEE: tok 为左括号
 		s.nextch()
 		s.tok = _Lparen
 
-	case '[':
+	case '[':          // JAMLEE: tok 为左中括号
 		s.nextch()
 		s.tok = _Lbrack
 
-	case '{':
+	case '{':          // JAMLEE: tok 为左大括号
 		s.nextch()
 		s.tok = _Lbrace
 
-	case ',':
+	case ',':          // JAMLEE: tok 为逗号
 		s.nextch()
 		s.tok = _Comma
 
-	case ';':
+	case ';':         // JAMLEE: tok 为分号
 		s.nextch()
 		s.lit = "semicolon"
 		s.tok = _Semi
 
-	case ')':
+	case ')':      // JAMLEE: tok 为右圆括号
 		s.nextch()
 		s.nlsemi = true
 		s.tok = _Rparen
 
-	case ']':
+	case ']':      // JAMLEE: tok 为右中括号
 		s.nextch()
 		s.nlsemi = true
 		s.tok = _Rbrack
 
-	case '}':
+	case '}':    // JAMLEE: tok 为右大括号
 		s.nextch()
 		s.nlsemi = true
 		s.tok = _Rbrace
 
-	case ':':
+	case ':':     // JAMLEE: tok 为 :=， 否则为 :
 		s.nextch()
 		if s.ch == '=' {
 			s.nextch()
@@ -181,13 +187,13 @@ redo:
 		}
 		s.tok = _Colon
 
-	case '.':
+	case '.':     // JAMLEE: tok 为数字 或者 . 或者 ..., 判断完后不成功需要回溯到原位置
 		s.nextch()
 		if isDecimal(s.ch) {
 			s.number(true)
 			break
 		}
-		// JAMLEE: 如何是是三个 point
+		// JAMLEE: 如果是三个 point
 		if s.ch == '.' {
 			s.nextch()
 			if s.ch == '.' {
@@ -200,7 +206,7 @@ redo:
 		}
 		s.tok = _Dot
 
-	case '+':
+	case '+':      // JAMLEE: + 或者 +=， ++
 		s.nextch()
 		s.op, s.prec = Add, precAdd
 		if s.ch != '+' {
@@ -231,16 +237,16 @@ redo:
 		}
 		s.tok = _Star
 
-	case '/':
+	case '/':    // JAMLEE: 单行注释，或者多行注释 或者 除法运算
 		s.nextch()
 		if s.ch == '/' {
 			s.nextch()
-			s.lineComment()
+			s.lineComment() // JAMLEE: 确定是单行注释, 本 token无效， 然后继续下一个 token
 			goto redo
 		}
 		if s.ch == '*' {
 			s.nextch()
-			s.fullComment()
+			s.fullComment() // JAMLEE: 确定是多行注释, 本 token无效， 然后继续下一个 token
 			if line, _ := s.pos(); line > s.line && nlsemi {
 				// A multi-line comment acts like a newline;
 				// it translates to a ';' if nlsemi is set.
@@ -310,7 +316,7 @@ redo:
 		s.op, s.prec = Lss, precCmp
 		s.tok = _Operator
 
-	case '>':
+	case '>': // JAMLEE: 小于等于
 		s.nextch()
 		if s.ch == '=' {
 			s.nextch()
@@ -326,7 +332,7 @@ redo:
 		s.op, s.prec = Gtr, precCmp
 		s.tok = _Operator
 
-	case '=':
+	case '=':   // JAMLEE: 赋值 或者 等于
 		s.nextch()
 		if s.ch == '=' {
 			s.nextch()
@@ -336,7 +342,7 @@ redo:
 		}
 		s.tok = _Assign
 
-	case '!':
+	case '!':      // JAMLEE: not 或者 不等于
 		s.nextch()
 		if s.ch == '=' {
 			s.nextch()
@@ -364,6 +370,7 @@ assignop:
 	s.tok = _Operator
 }
 
+// JAMLEE: 返回一个标示符（关键字或者变量名）。可以是 var 这种关键字，也可以是变量名
 func (s *scanner) ident() {
 	// accelerate common case (7bit ASCII)
 	for isLetter(s.ch) || isDecimal(s.ch) {
@@ -373,7 +380,7 @@ func (s *scanner) ident() {
 	// general case
 	if s.ch >= utf8.RuneSelf {
 		for s.atIdentChar(false) {
-			s.nextch()
+			s.nextch() // JAMLEE: 是letter和数字不是其他的值，一直read下去。
 		}
 	}
 
@@ -382,13 +389,14 @@ func (s *scanner) ident() {
 	if len(lit) >= 2 {
 		if tok := keywordMap[hash(lit)]; tok != 0 && tokStrFast(tok) == string(lit) {
 			s.nlsemi = contains(1<<_Break|1<<_Continue|1<<_Fallthrough|1<<_Return, tok)
-			s.tok = tok
+			s.tok = tok // JAMLEE: s.lit 有可能是遗留的, 没有覆盖而已
 			return
 		}
 	}
 
+	// JAMLEE: 是一个普通的值，例如变量名，常量名。tok 的类型为 name。
 	s.nlsemi = true
-	s.lit = string(lit)
+	s.lit = string(lit) // JAMLEE: 标示符必然是字符类型的
 	s.tok = _Name
 }
 
@@ -398,6 +406,7 @@ func tokStrFast(tok token) string {
 	return _token_name[_token_index[tok-1]:_token_index[tok]]
 }
 
+// JAMLEE: 是否是一个 identifier，identifier 不可以用数字开头
 func (s *scanner) atIdentChar(first bool) bool {
 	switch {
 	case unicode.IsLetter(s.ch) || s.ch == '_':
@@ -422,6 +431,7 @@ func hash(s []byte) uint {
 
 var keywordMap [1 << 6]token // size must be power of two
 
+// JAMLEE: 将字符串和对应的 token 值对应起来。形成一个 map
 func init() {
 	// populate keywordMap
 	for tok := _Break; tok <= _Var; tok++ {
@@ -432,7 +442,7 @@ func init() {
 		keywordMap[h] = tok
 	}
 }
-
+// JAMLEE: 转为小写字母后判断字母范围
 func lower(ch rune) rune     { return ('a' - 'A') | ch } // returns lower-case ch iff ch is ASCII letter
 func isLetter(ch rune) bool  { return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' }
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
@@ -725,10 +735,12 @@ func (s *scanner) rawString() {
 	s.setLit(StringLit, ok)
 }
 
+// JAMLEE: 设置 comment。用错误处理方法, 这个是传入进来的
 func (s *scanner) comment(text string) {
 	s.errorAtf(0, "%s", text)
 }
 
+// JAMLEE: 读取，直到遇到 \n
 func (s *scanner) skipLine() {
 	// don't consume '\n' - needed for nlsemi logic
 	for s.ch >= 0 && s.ch != '\n' {
@@ -736,12 +748,14 @@ func (s *scanner) skipLine() {
 	}
 }
 
+// JAMLEE: 把注释当作一个 token 解析出来
 func (s *scanner) lineComment() {
 	// opening has already been consumed
 
+	// JAMLEE: 如果要处理普通注释
 	if s.mode&comments != 0 {
 		s.skipLine()
-		s.comment(string(s.segment()))
+		s.comment(string(s.segment())) // JAMLEE: 会传递到自定义的错误函数中
 		return
 	}
 
@@ -752,6 +766,7 @@ func (s *scanner) lineComment() {
 		return
 	}
 
+	// JAMLEE: 这里
 	// recognize go: or line directives
 	prefix := "go:"
 	if s.ch == 'l' {

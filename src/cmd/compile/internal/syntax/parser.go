@@ -19,12 +19,12 @@ type parser struct {
 	errh  ErrorHandler
 	mode  Mode
 	pragh PragmaHandler
-	scanner
+	scanner // JAMLEE: parser 本身继承了 scanner
 
 	base   *PosBase // current position base
 	first  error    // first error encountered
 	errcnt int      // number of errors encountered
-	pragma Pragma   // pragmas
+	pragma Pragma   // pragmas, JAMLEE: 当前注释中的特殊命令 directives
 
 	fnest  int    // function nesting level (for error handling)
 	xnest  int    // expression nesting level (for complit ambiguity resolution)
@@ -44,6 +44,7 @@ func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh Pragm
 		// position, it is safe to use the most recent position
 		// base to compute the corresponding Pos value.
 		func(line, col uint, msg string) {
+			// 如果不是注释的话，那么表示就是出错
 			if msg[0] != '/' {
 				p.errorAt(p.posAt(line, col), msg)
 				return
@@ -69,12 +70,13 @@ func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh Pragm
 				return
 			}
 
+			// JAMLEE: 判断注释中是不是  go directive
 			// go: directive (but be conservative and test)
 			if pragh != nil && strings.HasPrefix(text, "go:") {
 				p.pragma = pragh(p.posAt(line, col+2), p.scanner.blank, text, p.pragma) // +2 to skip over // or /*
 			}
 		},
-		directives,
+		directives, // JAMLEE: comment 仅仅处理 directives 模式.
 	)
 
 	p.base = file
@@ -106,6 +108,8 @@ func (p *parser) clearPragma() {
 	}
 }
 
+// JAMLEE: 更新 postBase 地址. https://pkg.go.dev/cmd/compile#hdr-Compiler_Directives
+// 主要是这个 // line: 的指令会修改 base
 // updateBase sets the current position base to a new line base at pos.
 // The base's filename, line, and column values are extracted from text
 // which is positioned at (tline, tcol) (only needed for error messages).
@@ -153,6 +157,7 @@ func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 	p.base = NewLineBase(pos, filename, line, col)
 }
 
+// JAMLEE： 注释文本处理
 func commentText(s string) string {
 	if s[:2] == "/*" {
 		return s[2 : len(s)-2] // lop off /* and */
@@ -178,6 +183,7 @@ func trailingDigits(text string) (uint, uint, bool) {
 	return uint(i + 1), uint(n), err == nil
 }
 
+// JAMLEE: 跳过包名， 第一句肯定是包名。
 func (p *parser) got(tok token) bool {
 	if p.tok == tok {
 		p.next()
@@ -361,6 +367,7 @@ func (p *parser) print(msg string) {
 	fmt.Printf("%5d: %s%s\n", p.line, p.indent, msg)
 }
 
+// JAMLEE: 在这里循环调用，使得 token 能够被一直被识别。调用 fileOrNil 之前已经 scanner 出来 1 个token。pos 也是最新的位置
 // ----------------------------------------------------------------------------
 // Package files
 //
@@ -377,17 +384,18 @@ func (p *parser) fileOrNil() *File {
 		defer p.trace("file")()
 	}
 
+	// JAMLEE: 新建一个 File 类型
 	f := new(File)
-	f.pos = p.pos()
+	f.pos = p.pos() // JAMLEE: 未解析 token 的起始位置
 
 	// PackageClause
-	if !p.got(_Package) {
+	if !p.got(_Package) { // JAMLEE: 获取一个 token，这个 token 是否是
 		p.syntaxError("package statement must be first")
 		return nil
 	}
 	f.Pragma = p.takePragma()
 	f.PkgName = p.name()
-	p.want(_Semi)
+	p.want(_Semi) // JAMLEE: 获取一个换行，这些 「换行」 「EOF」「;」都是 Semi 表示的 tok
 
 	// don't bother continuing if package clause has errors
 	if p.first != nil {
@@ -402,6 +410,10 @@ func (p *parser) fileOrNil() *File {
 
 	// { TopLevelDecl ";" }
 	for p.tok != _EOF {
+		// JAMLEE: 打印所有 tok
+		// fmt.Printf("%s\n", p.tok)
+		// JAMLEE: END
+
 		switch p.tok {
 		case _Const:
 			p.next()
@@ -490,17 +502,18 @@ func (p *parser) list(open, sep, close token, f func() bool) Pos {
 	return pos
 }
 
+// JAMLEE: 将解析的声明加到对应的 decl 数组中。f 是对应的解析函数。
 // appendGroup(f) = f | "(" { f ";" } ")" . // ";" is optional before ")"
 func (p *parser) appendGroup(list []Decl, f func(*Group) Decl) []Decl {
-	if p.tok == _Lparen {
-		g := new(Group)
+	if p.tok == _Lparen { // JAMLEE: 如果 token 是左圆括号。
+		g := new(Group) // JAMLEE: 就创建一个新的 group, 比如 import () 这种用括号的情况下。
 		p.clearPragma()
 		p.list(_Lparen, _Semi, _Rparen, func() bool {
-			list = append(list, f(g))
+			list = append(list, f(g)) // JAMLEE: 这里传入的是 group
 			return false
 		})
-	} else {
-		list = append(list, f(nil))
+	} else { // JAMLEE: 添加到当前的数组中
+		list = append(list, f(nil)) // JAMLEE: 这里传入的是 nil
 	}
 
 	if debug {
@@ -2227,6 +2240,7 @@ func (p *parser) newName(value string) *Name {
 	return n
 }
 
+// JAMLEE: 获取包名、变量名等，当前置的内容是 package 、var 之类的。
 func (p *parser) name() *Name {
 	// no tracing to avoid overly verbose output
 
@@ -2235,7 +2249,8 @@ func (p *parser) name() *Name {
 		p.next()
 		return n
 	}
-
+	
+	// JAMLEE: 特殊情况的，返回一个 _ 的 Name。
 	n := p.newName("_")
 	p.syntaxError("expecting name")
 	p.advance()

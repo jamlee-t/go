@@ -52,6 +52,7 @@ type Pragma interface{}
 // Blank specifies whether the line is blank before the pragma.
 type PragmaHandler func(pos Pos, blank bool, text string, current Pragma) Pragma
 
+// JAMLEE: 文件解析入口。解析一个 go 文件 调用一次。
 // Parse parses a single Go source file from src and returns the corresponding
 // syntax tree. If there are errors, Parse will return the first error found,
 // and a possibly partially constructed syntax tree, or nil.
@@ -75,9 +76,10 @@ func Parse(base *PosBase, src io.Reader, errh ErrorHandler, pragh PragmaHandler,
 		}
 	}()
 
+	// JAMLEE: 初始化 parser。开始解析一个 go 文件
 	var p parser
 	p.init(base, src, errh, pragh, mode)
-	p.next()
+	p.next() // JAMLEE: 开始驱动 scanner 方法获取 token，获取一个 token 解析一下语法。当前已经获取到 1 个 token
 	return p.fileOrNil(), p.first
 }
 

@@ -10,6 +10,7 @@ import "fmt"
 // Incoming values (arguments) larger than PosMax will be set to PosMax.
 const PosMax = 1 << 30
 
+// JAMLEE: Pos 表示一个绝对的地址，但是要通过 pos 的base计算
 // A Pos represents an absolute (line, col) source position
 // with a reference to position base for computing relative
 // (to a file, or line directive) position information.
@@ -33,6 +34,7 @@ func (pos Pos) Col() uint      { return uint(pos.col) }
 
 func (pos Pos) RelFilename() string { return pos.base.Filename() }
 
+// JAMLEE: 这里显示就是相对的基地址的地址
 func (pos Pos) RelLine() uint {
 	b := pos.base
 	if b.Line() == 0 {
@@ -87,6 +89,7 @@ func (p position_) String() string {
 	return fmt.Sprintf("%s:%d:%d", p.filename, p.line, p.col)
 }
 
+// JAMLEE: posBase 表示一个相对位置。
 // A PosBase represents the base for relative position information:
 // At position pos, the relative position is filename:line:col.
 type PosBase struct {
