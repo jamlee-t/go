@@ -92,6 +92,7 @@ func contains(tokset uint64, tok token) bool {
 	return tokset&(1<<tok) != 0
 }
 
+// JAMLEE: 用于表示基本类型的类型表示
 type LitKind uint8
 
 // TODO(gri) With the 'i' (imaginary) suffix now permitted on integer

@@ -5,7 +5,7 @@
 package syntax
 
 // JAMLEE: Node 是一个 interface。File 结构体实现了它。从定义上来看，File 结构体仅仅是存储
-// 各种声明。
+// 各种声明。Node，表达式是一个 node，语句也是一个 node。那node之间的关系是包含关系还是并列关系呢？
 // ----------------------------------------------------------------------------
 // Nodes
 
@@ -22,6 +22,7 @@ type Node interface {
 	aNode()
 }
 
+// JAMLEE: node 是 Node 接口的实现
 type node struct {
 	// commented out for now since not yet used
 	// doc  *Comment // nil means no comment(s) attached
@@ -57,18 +58,19 @@ type (
 	//              Path
 	// LocalPkgName Path
 	ImportDecl struct {
-		Group        *Group // nil means not part of a group
+		Group        *Group // nil means not part of a group, JAMLEE: 将声明和group一起关联起来
 		Pragma       Pragma
-		LocalPkgName *Name // including "."; nil means no rename present
-		Path         *BasicLit
+		LocalPkgName *Name // including "."; nil means no rename present， JAMLEE: 表示包的名字，表达式
+		Path         *BasicLit // JAMLEE: 基本字面量表示，表达式。
 		decl
 	}
 
+	// JAMLEE: ConstDecl 和  VarDecl 英国蕾西
 	// NameList
 	// NameList      = Values
 	// NameList Type = Values
 	ConstDecl struct {
-		Group    *Group // nil means not part of a group
+		Group    *Group // nil means not part of a group, JAMLEE: 将常量和group一起关联起来
 		Pragma   Pragma
 		NameList []*Name
 		Type     Expr // nil means no type
@@ -78,7 +80,7 @@ type (
 
 	// Name Type
 	TypeDecl struct {
-		Group  *Group // nil means not part of a group
+		Group  *Group // nil means not part of a group, JAMLEE: 将类型和group一起关联起来
 		Pragma Pragma
 		Name   *Name
 		Alias  bool
@@ -86,18 +88,21 @@ type (
 		decl
 	}
 
+	// JAMLEE: 这里类型为什么没有像 int 这种类型选择呢？因为 type 和 vaules 都用 Name 来表示的。这里负责处理所有 var 开头的语句。隐含 type 时，type必定为nil
 	// NameList Type
 	// NameList Type = Values
 	// NameList      = Values
 	VarDecl struct {
-		Group    *Group // nil means not part of a group
+		Group    *Group // nil means not part of a group, JAMLEE: 将变量和group一起关联起来
 		Pragma   Pragma
-		NameList []*Name
-		Type     Expr // nil means no type, JAMLEE: 这里有很多类型可以选择例如，函数类型。所以是一个通用的 Expr
-		Values   Expr // nil means no values
+		NameList []*Name // JAMLEE: 存在一次声明多个同类型变量的情况
+		Type     Expr // nil means no type, JAMLEE: 这里有很多类型可以选择例如，函数类型。类型用表达式 Name 表示, 也就是「字符串」。而不是 BasicLit
+		              // 如果声明为 var func01 = func(int){}. 此时 type 为 nil (因为隐含了)， NameList 为 ["func01"]
+		Values   Expr // nil means no values, 可以是 BasicLit, FuncLit
 		decl
 	}
 
+	// JAMLEE: 函数不用关联 group
 	// func          Name Type { Body }
 	// func          Name Type
 	// func Receiver Name Type { Body }
@@ -112,15 +117,18 @@ type (
 	}
 )
 
+// JAMLEE: decl 也是 一个 node
 type decl struct{ node }
 
 func (*decl) aDecl() {}
 
+// JAMLEE: 所有的声明属于一个 group，指向同一个 group 节点
 // All declarations belonging to the same group point to the same Group node.
 type Group struct {
 	dummy int // not empty so we are guaranteed different Group instances
 }
 
+// JAMLEE: 表达式的所有定义
 // ----------------------------------------------------------------------------
 // Expressions
 
@@ -136,7 +144,7 @@ type (
 		expr
 	}
 
-	// JAMLEE: 表示例如函数名，变量名
+	// JAMLEE: 表示例如函数名，变量名。例如: var test int32, 其中 VarDecl 中 Type 是 "int32", NameList 是 ["test"]
 	// Value
 	Name struct {
 		Value string
@@ -146,8 +154,8 @@ type (
 	// JAMLEE: 在语法树中表示基本字面量数值。还可以表示引入包例如 "fmt" 的值
 	// Value
 	BasicLit struct {
-		Value string
-		Kind  LitKind
+		Value string  // JAMLEE: 字面量统一用字符串表示
+		Kind  LitKind // JAMLEE: 表示基本类型赋值，但是这里没有类型区分 int64 和 int32 这种区别。
 		Bad   bool // true means the literal Value has syntax errors
 		expr
 	}
@@ -306,7 +314,7 @@ type (
 	}
 )
 
-// JAMLEE: expr 实现了 node
+// JAMLEE: expr 继承了 node。所以表达式是 1 个 node
 type expr struct{ node }
 
 func (*expr) aExpr() {}
@@ -319,6 +327,7 @@ const (
 	RecvOnly
 )
 
+// JAMLEE: 声明所有的语句。分为 Stmt 和 SimpleStmt  两种。每一个语句也是一个 node
 // ----------------------------------------------------------------------------
 // Statements
 
@@ -447,6 +456,7 @@ type (
 	}
 )
 
+// JAMLEE: 语句也是 1 个 node
 type stmt struct{ node }
 
 func (stmt) aStmt() {}

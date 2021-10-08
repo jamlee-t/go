@@ -8,7 +8,8 @@ import "fmt"
 
 // 常量Smt
 const name = 123
-
+var test int32
+var test01 = 1
 // 声明变量 Smt
 var func01 = func(int){}
 

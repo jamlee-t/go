@@ -31,6 +31,8 @@ type parser struct {
 	indent []byte // tracing support
 }
 
+// JAMLEE: 初始化 parser。parser 是继承的 scanner，每调用一次 scanner 的方法，会得到 1 个 tok， parser 会解析当前的token，将其安排到
+// syntax.File 结构中
 func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh PragmaHandler, mode Mode) {
 	p.file = file
 	p.errh = errh
@@ -44,7 +46,7 @@ func (p *parser) init(file *PosBase, r io.Reader, errh ErrorHandler, pragh Pragm
 		// position, it is safe to use the most recent position
 		// base to compute the corresponding Pos value.
 		func(line, col uint, msg string) {
-			// 如果不是注释的话，那么表示就是出错
+			// JAMLEE: 如果不是注释的话，那么表示就是出错
 			if msg[0] != '/' {
 				p.errorAt(p.posAt(line, col), msg)
 				return
@@ -157,7 +159,7 @@ func (p *parser) updateBase(pos Pos, tline, tcol uint, text string) {
 	p.base = NewLineBase(pos, filename, line, col)
 }
 
-// JAMLEE： 注释文本处理
+// JAMLEE： 注释文本处理，返回注释的文本内容
 func commentText(s string) string {
 	if s[:2] == "/*" {
 		return s[2 : len(s)-2] // lop off /* and */
@@ -408,26 +410,27 @@ func (p *parser) fileOrNil() *File {
 		p.want(_Semi)
 	}
 
+	// JAMLEE: 顶级声明解析
 	// { TopLevelDecl ";" }
 	for p.tok != _EOF {
 		// JAMLEE: 打印所有 tok
 		// fmt.Printf("%s\n", p.tok)
 		// JAMLEE: END
 
-		switch p.tok {
+		switch p.tok { // JAMLEE: 进入 const 声明的解析
 		case _Const:
 			p.next()
 			f.DeclList = p.appendGroup(f.DeclList, p.constDecl)
 
-		case _Type:
+		case _Type: // JAMLEE: 进入 类型声明解析
 			p.next()
 			f.DeclList = p.appendGroup(f.DeclList, p.typeDecl)
 
-		case _Var:
+		case _Var: // JAMLEE: 进入 变量声明解析
 			p.next()
 			f.DeclList = p.appendGroup(f.DeclList, p.varDecl)
 
-		case _Func:
+		case _Func: // JAMLEE: 进入 函数声明的解析
 			p.next()
 			if d := p.funcDeclOrNil(); d != nil {
 				f.DeclList = append(f.DeclList, d)
@@ -509,7 +512,7 @@ func (p *parser) appendGroup(list []Decl, f func(*Group) Decl) []Decl {
 		g := new(Group) // JAMLEE: 就创建一个新的 group, 比如 import () 这种用括号的情况下。
 		p.clearPragma()
 		p.list(_Lparen, _Semi, _Rparen, func() bool {
-			list = append(list, f(g)) // JAMLEE: 这里传入的是 group
+			list = append(list, f(g)) // JAMLEE: 这里传入的是 新的group
 			return false
 		})
 	} else { // JAMLEE: 添加到当前的数组中
@@ -527,6 +530,7 @@ func (p *parser) appendGroup(list []Decl, f func(*Group) Decl) []Decl {
 	return list
 }
 
+// JAMLEE: 对 Group 操作。
 // ImportSpec = [ "." | PackageName ] ImportPath .
 // ImportPath = string_lit .
 func (p *parser) importDecl(group *Group) Decl {
@@ -625,6 +629,7 @@ func (p *parser) varDecl(group *Group) Decl {
 	return d
 }
 
+// JAMLEE: 相比于其他顶级声明，这里的函数声明最为复杂，因为里面包含各种语句。
 // FunctionDecl = "func" FunctionName ( Function | Signature ) .
 // FunctionName = identifier .
 // Function     = Signature FunctionBody .
@@ -2083,6 +2088,7 @@ func (p *parser) commClause() *CommClause {
 	return c
 }
 
+// JAMLEE: 这个是重要的语句解析。从funcBody 一路传递过来。
 // Statement =
 // 	Declaration | LabeledStmt | SimpleStmt |
 // 	GoStmt | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
