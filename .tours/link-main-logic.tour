@@ -1,0 +1,13 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "link main logic",
+  "steps": [
+    {
+      "file": "src/cmd/link/main.go",
+      "description": "link命令指向入口",
+      "line": 72
+    }
+  ],
+  "ref": "release-branch.go1.24",
+  "isPrimary": true
+}

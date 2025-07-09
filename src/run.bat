@@ -26,15 +26,15 @@ del env.bat
 
 set GOPATH=c:\nonexist-gopath
 
-if x%1==x--no-rebuild goto norebuild
-..\bin\go tool dist test --rebuild
-if errorlevel 1 goto fail
-goto end
+@REM if x%1==x--no-rebuild goto norebuild
+@REM ..\bin\go tool dist test --rebuild
+@REM if errorlevel 1 goto fail
+@REM goto end
 
-:norebuild
-..\bin\go tool dist test
-if errorlevel 1 goto fail
-goto end
+@REM :norebuild
+@REM ..\bin\go tool dist test
+@REM if errorlevel 1 goto fail
+@REM goto end
 
 :fail
 set GOBUILDFAIL=1

@@ -1,0 +1,32 @@
+{
+    "go.toolsEnvVars": {
+        "GOROOT": "${workspaceFolder}"
+    },
+    "files.exclude": {
+        "**/.git": false,
+        "**/.svn": false,
+        "**/.hg": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false
+    },
+    "explorerExclude.backup": {
+        "**/.git": false,
+        "**/.svn": false,
+        "**/.hg": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false
+    },
+    "code-review.filename": ".vscode/code-review.csv",
+    "code-review.categories": [
+        "Architecture",
+        "Best Practices",
+        "Code-Style",
+        "Complexity",
+        "Error Handling",
+        "Maintainability",
+        "Performance",
+        "Reliability",
+        "Separation of concerns",
+        "Code Walkthrough"
+    ]
+}
