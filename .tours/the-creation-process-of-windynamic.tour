@@ -1,0 +1,22 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "The Creation Process of .windynamic",
+  "steps": [
+    {
+      "file": "src/cmd/link/internal/ld/go.go",
+      "description": "读取 cgo 指令时，注册 dynimplib、extname、dynimpver ",
+      "line": 146
+    },
+    {
+      "file": "src/cmd/link/internal/ld/pe.go",
+      "description": "读取注册动态库",
+      "line": 1197
+    },
+    {
+      "file": "src/cmd/link/internal/ld/pe.go",
+      "description": "注册的动态库变成符号 .windynamic",
+      "line": 1254
+    }
+  ],
+  "ref": "codewalkthrough-v1.24"
+}

@@ -28,5 +28,6 @@
         "Reliability",
         "Separation of concerns",
         "Code Walkthrough"
-    ]
+    ],
+    "code-review.reportWithCodeSelection": true
 }
