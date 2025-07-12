@@ -1,7 +1,6 @@
 {
     "go.toolsEnvVars": {
-        "GOROOT": "${workspaceFolder}",
-        "GOPATH": "/Users/jamlee/go"
+        "GOROOT": "${workspaceFolder}"
     },
     "files.exclude": {
         "**/.git": false,

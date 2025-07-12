@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "符号 .windynamic 创建流程",
+  "title": "CMD(link)：符号 .windynamic 创建流程",
   "steps": [
     {
       "file": "src/cmd/link/internal/ld/go.go",

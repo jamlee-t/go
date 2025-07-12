@@ -1,0 +1,14 @@
+{
+	"files": [
+		{
+			"path": "src/cmd/link/main.go",
+			"bookmarks": [
+				{
+					"line": 39,
+					"column": 0,
+					"label": "CMD(link)：命令入口"
+				}
+			]
+		}
+	]
+}
