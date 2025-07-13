@@ -1,7 +1,5 @@
 {
-    "go.toolsEnvVars": {
-        "GOROOT": "${workspaceFolder}"
-    },
+    "go.goroot": "${workspaceFolder}",
     "files.exclude": {
         "**/.git": false,
         "**/.svn": false,
