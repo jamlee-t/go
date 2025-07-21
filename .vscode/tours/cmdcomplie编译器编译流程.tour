@@ -1,0 +1,63 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "CMD(complie)：编译器编译流程",
+  "steps": [
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "# 语法分析开始",
+      "line": 208,
+      "title": "语法分析开始"
+    },
+    {
+      "file": "src/cmd/compile/internal/noder/noder.go",
+      "description": "# 调用 syntax.Parse 返回解析结果 noder.File\n\n主要包：noder、syntax。一个 noder 关联一个文件，syntax 定义语法树结构。",
+      "line": 59
+    },
+    {
+      "file": "src/cmd/compile/internal/noder/unified.go",
+      "description": "# type2 从 synatx 建立的 AST 上执行类型检查",
+      "line": 319
+    },
+    {
+      "file": "src/cmd/compile/internal/noder/unified.go",
+      "description": "# ast 转为 unified ir\n\n---\n\n# noders 参数\n\n你询问的是 `func unified(m posMap, noders []*noder)` 函数中的 `noders` 参数是否指AST语法树。\n\n## `noders` 参数的含义\n\n`noders` 参数不是直接的AST语法树，而是包含语法树的 `noder` 结构体切片。 [1](#3-0) \n\n每个 `noder` 结构体包含：\n- `file *syntax.File` - 这才是真正的AST语法树\n- 其他辅助信息如 `linknames`、`pragcgobuf`、错误通道等\n\n## 在编译流程中的使用\n\n在 `LoadPackage` 函数中可以看到完整的流程：\n\n1. 首先创建 `noders` 切片： [2](#3-1) \n\n2. 每个 `noder` 通过 `syntax.Parse` 解析源文件获得语法树： [3](#3-2) \n\n3. 最后调用 `unified(m, noders)` 进行统一IR处理： [4](#3-3) \n\n## 在统一IR中的处理\n\n在统一IR的写入过程中，`noders` 被用来访问每个文件的声明列表： [5](#3-4) \n\n这里通过 `p.file.DeclList` 访问每个 `noder` 中存储的语法树的声明节点。\n\n**Notes**\n\n所以准确地说，`noders` 是包含AST语法树的容器结构体切片，每个 `noder.file` 字段才是真正的 `*syntax.File` AST语法树。这种设计允许在处理语法树的同时携带额外的元信息（如pragma指令、linkname等）。\n\nWiki pages you might want to explore:\n- [Unified IR and SSA (golang/go)](/wiki/golang/go#3.2)",
+      "line": 195
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "# 内联和去虚化的交错处理。意思是一边去虚拟化一遍内联交错执行",
+      "line": 240
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "# 包装类型、包装函数\n\nTODO: 暂未查看\n\n---\n\n什么是方法值表达式？\n在 Go 语言中，方法值表达式（Method Value Expression） 是一种特殊的表达式，它将对象的方法绑定到该对象上，形成一个可独立调用的函数值。这种表达式允许你将方法作为参数传递或存储，而无需每次调用时都显式指定接收者。\n\n```go\npackage main\n\nimport \"fmt\"\n\ntype Point struct {\n    X, Y int\n}\n\n// 方法：接收者为值类型\nfunc (p Point) Add(other Point) Point {\n    return Point{p.X + other.X, p.Y + other.Y}\n}\n\n// 方法：接收者为指针类型\nfunc (p *Point) Scale(factor int) {\n    p.X *= factor\n    p.Y *= factor\n}\n\nfunc main() {\n    p := Point{1, 2}\n    q := Point{3, 4}\n\n    // 创建方法值表达式\n    addMethod := p.Add  // 捕获 p 的值\n    scaleMethod := (&p).Scale  // 捕获 p 的指针\n\n    // 直接调用方法\n    fmt.Println(p.Add(q))  // 输出: {4 6}\n\n    // 通过方法值调用\n    fmt.Println(addMethod(q))  // 输出: {4 6}\n\n    // 修改 p 后，方法值仍使用捕获时的值\n    p = Point{10, 20}\n    fmt.Println(addMethod(q))  // 输出: {4 6}（仍使用旧的 p 值）\n\n    // 指针接收者的方法值\n    scaleMethod(2)\n    fmt.Println(p)  // 输出: {20 40}（修改生效，因为捕获的是指针）\n}\n```\n\n---\n\n你询问的是 Go 编译器中\"生成包装函数\"（MakeWrappers）的作用。\n\n## 答案\n\n生成包装函数是 Go 编译器中用于创建方法包装器的重要步骤，主要用于支持 Go 语言的方法调用机制。 [1](#14-0) \n\n### 包装函数的主要用途\n\n包装函数主要处理以下几种情况：\n\n1. **隐式解引用包装器**：当方法声明为值接收者 `T` 时，也需要在指针类型 `*T` 的方法集中可用，因此需要生成类似 `func (recv *T) M(i int) bool { return (*recv).M(i) }` 的包装器\n\n2. **提升方法包装器**：当结构体包含嵌入字段时，需要为提升的方法生成包装器，如 `func (recv U) M(i int) bool { return recv.T.M(i) }`\n\n3. **方法值包装器**：对于方法值表达式 `x.M`，需要生成类似 `tmp := x; func(i int) bool { return tmp.M(i) }` 的包装器\n\n### 实现机制\n\n`MakeWrappers` 函数会遍历需要包装器的类型： [2](#14-1) \n\n对于每个类型，会调用 `wrapType` 函数生成相应的包装器： [3](#14-2) \n\n### ABI 包装函数\n\n除了方法包装器，编译器还会生成 ABI（Application Binary Interface）包装函数： [4](#14-3) \n\nABI 包装函数用于在不同调用约定之间进行转换，例如在 ABI0 和 ABIInternal 之间转换参数传递方式。\n\n### 包装函数的生成时机\n\n包装函数的生成必须在内联之后进行： [5](#14-4) \n\n这是因为内联可能会改变函数的结构，影响包装函数的生成。\n\n## Notes\n\n包装函数是 Go 语言方法调用机制的重要组成部分，它们确保了方法在不同上下文中的正确调用，特别是在接口调用、方法值和嵌入类型的情况下。这些包装函数通常标记为 DUPOK，允许链接器处理重复符号。\n\nWiki pages you might want to explore:\n- [Unified IR and SSA (golang/go)](/wiki/golang/go#3.2)\n- [Optimizations (golang/go)](/wiki/golang/go#3.3)\n\nWiki pages you might want to explore:\n- [Unified IR and SSA (golang/go)](/wiki/golang/go#3.2)\n- [Optimizations (golang/go)](/wiki/golang/go#3.3)",
+      "line": 242
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "TODO: 暂未查看\n\n---\n\n你询问的是 Go 编译器中循环变量捕获处理的作用，具体是在 `src/cmd/compile/internal/gc/main.go:244-249` 这段代码。\n\n## 答案\n\n这段代码是 Go 编译器中处理循环变量捕获问题的关键步骤。 [1](#15-0) \n\n### 循环变量捕获问题\n\n这个处理解决的是 Go 语言中一个经典的问题：当在循环中创建闭包或获取变量地址时，可能会意外地捕获到循环变量的最终值，而不是每次迭代时的值。\n\n### 具体实现\n\n代码遍历 `typecheck.Target.Funcs` 中的每个函数，调用 `loopvar.ForCapture(fn)` 来检测和转换需要处理的循环： [2](#15-1) \n\n`ForCapture` 函数会分析函数中的循环，识别那些可能存在变量捕获问题的循环，并对它们进行转换。\n\n### 转换逻辑\n\n转换的核心逻辑在 `loopvar.go` 中实现： [3](#15-2) \n\n函数会检测以下情况：\n- 循环变量被闭包捕获\n- 循环变量的地址被获取\n- 循环变量可能逃逸到堆上\n\n### 控制机制\n\n这个功能的启用受到多个因素控制： [4](#15-3) \n\n包括：\n- `GOEXPERIMENT=loopvar` 实验标志\n- `-d=loopvar=N` 编译器调试标志\n- `GOCOMPILEDEBUG=loopvarhash` 哈希调试选项\n\n### 版本控制\n\n从 Go 1.22 开始，这个行为默认启用： [5](#15-4) \n\n## Notes\n\n这个处理步骤必须在逃逸分析之前进行，因为它可能会改变变量的逃逸行为。转换后的变量信息会被记录在 `transformed` 切片中，用于后续的日志记录和分析。\n\nWiki pages you might want to explore:\n- [Optimizations (golang/go)](/wiki/golang/go#3.3)\n\nWiki pages you might want to explore:\n- [Unified IR and SSA (golang/go)](/wiki/golang/go#3.2)\n- [Optimizations (golang/go)](/wiki/golang/go#3.3)",
+      "line": 245
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "TODO: 待查看\n\n---\n\n你询问的是 Go 编译器中 ABI 包装函数生成的作用，具体是在 `src/cmd/compile/internal/gc/main.go:254-256` 这段代码。\n\n## 答案\n\n这段代码是 Go 编译器中生成 ABI（Application Binary Interface）包装函数的关键步骤。 [1](#16-0) \n\n### ABI 包装函数的作用\n\nABI 包装函数用于在不同调用约定之间进行转换，主要是在 ABI0 和 ABIInternal 之间转换参数传递方式。 [2](#16-1) \n\n### 具体实现过程\n\n`symABIs.GenABIWrappers()` 函数会遍历 `typecheck.Target.Funcs` 中的所有函数，为每个函数应用 ABI 信息并在必要时生成包装函数：\n\n1. **处理 CGO 导出符号**：对于 CGO 导出的符号，编译器会告诉链接器导出定义 ABI 到 C，因此不会创建 ABI 包装器。 [3](#16-2) \n\n2. **应用 ABI 定义和引用**：编译器会为每个函数设置正确的 ABI 信息，包括定义 ABI 和引用 ABI 集合。 [4](#16-3) \n\n3. **生成包装函数**：当函数需要通过多个 ABI 调用时，编译器会生成相应的包装函数。 [5](#16-4) \n\n### ABI 包装函数的类型\n\n包装函数主要处理以下情况：\n\n- **ABI0 到 ABIInternal**：将传统的栈传参转换为寄存器传参\n- **ABIInternal 到 ABI0**：将寄存器传参转换为栈传参\n- **处理 linkname 符号**：对于使用 `//go:linkname` 指令的符号，可能需要通过任何 ABI 调用\n\n### 包装函数的实现\n\n实际的包装函数通过 `makeABIWrapper` 函数创建，它会生成一个新的函数来适配不同的调用约定。 [6](#16-5) \n\n### 执行时机\n\nABI 包装函数的生成必须在逃逸分析之前进行，因为它不会从死代码消除或内联中受益。 [1](#16-0) \n\n## Notes\n\nABI 包装函数是 Go 编译器支持新的寄存器调用约定的关键机制，它确保了不同 ABI 之间的兼容性，特别是在与汇编代码交互或处理 CGO 调用时。这个功能通过 `GOEXPERIMENT=regabiwrappers` 实验标志控制。\n\nWiki pages you might want to explore:\n- [Development Workflow (golang/go)](/wiki/golang/go#1.2)\n\nWiki pages you might want to explore:\n- [Development Workflow (golang/go)](/wiki/golang/go#1.2)",
+      "line": 256
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/main.go",
+      "description": "TODO: 待查看\n\n---\n\n你询问的是 Go 编译器中逃逸分析的作用，具体是在 `src/cmd/compile/internal/gc/main.go:260-269` 这段代码。\n\n## 答案\n\n这段代码是 Go 编译器中执行逃逸分析的关键步骤。 [1](#17-0) \n\n### 逃逸分析的作用\n\n逃逸分析是 Go 编译器的一个重要优化阶段，它的主要目的是：\n\n1. **决定变量分配位置**：确定变量应该分配在栈上还是堆上\n2. **支持闭包实现**：闭包会将栈变量的地址存储到闭包中，如果闭包不逃逸，它需要在栈上\n3. **处理大值类型**：大值类型也会在逃逸分析中被移到堆外，因为大值可能包含指针\n\n### 实现机制\n\n逃逸分析通过调用 `escape.Funcs(typecheck.Target.Funcs)` 来处理所有函数。 [2](#17-1) \n\n逃逸分析的核心实现在 `escape` 包中，它构建了一个数据流图来分析变量的逃逸行为： [3](#17-2) \n\n### 分析过程\n\n逃逸分析使用静态数据流分析来构建有向加权图：\n\n1. **构建位置图**：每个分配语句或表达式映射到唯一的\"位置\"\n2. **建立赋值边**：Go 赋值被建模为位置之间的有向边\n3. **权重计算**：边的权重表示解引用操作数减去取地址操作数 [4](#17-3) \n\n### 批处理机制\n\n逃逸分析使用批处理方式处理函数，支持相互递归的函数分析： [5](#17-4) \n\n### 结果应用\n\n分析完成后，编译器会根据逃逸分析结果更新节点的逃逸状态，并生成相应的诊断信息： [6](#17-5) \n\n### 执行时机\n\n逃逸分析必须在以下阶段之前执行：\n- 必须在栈复制器更新之前，因为栈复制器不会更新逃逸的闭包\n- 必须早期执行，因为大值可能包含指针\n\n## Notes\n\n逃逸分析是 Go 编译器优化的核心组件，它直接影响程序的内存分配策略和性能。分析结果会影响后续的代码生成和垃圾回收行为。这个阶段的输出可以通过 `-m` 编译标志查看。\n\nWiki pages you might want to explore:\n- [Go Compiler](/wiki/golang/go#3)\n\nWiki pages you might want to explore:\n- [Go Compiler (golang/go)](/wiki/golang/go#3)",
+      "line": 269
+    },
+    {
+      "file": "src/cmd/compile/internal/gc/compile.go",
+      "description": "# ssagen.Compile 编译入口\n",
+      "line": 189
+    },
+    {
+      "file": "src/cmd/compile/internal/ssagen/ssa.go",
+      "description": "# ssa.Compile 编译入口\n",
+      "line": 600
+    }
+  ],
+  "ref": "codewalkthrough-v1.24"
+}

@@ -9,6 +9,36 @@
 					"label": "CMD(link)：命令入口"
 				}
 			]
+		},
+		{
+			"path": "src/debug/elf/file.go",
+			"bookmarks": [
+				{
+					"line": 247,
+					"column": 0,
+					"label": "标准库(debug): ELF 文件打开入口"
+				}
+			]
+		},
+		{
+			"path": "src/cmd/internal/obj/objfile.go",
+			"bookmarks": [
+				{
+					"line": 31,
+					"column": 0,
+					"label": "gc 编译器写入 goobj 文件"
+				}
+			]
+		},
+		{
+			"path": "src/cmd/compile/internal/gc/main.go",
+			"bookmarks": [
+				{
+					"line": 207,
+					"column": 1,
+					"label": "[编译器]语法分析正式开始"
+				}
+			]
 		}
 	]
 }
