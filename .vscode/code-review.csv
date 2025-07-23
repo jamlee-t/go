@@ -18,4 +18,12 @@ f14214d07de7242c9a6a33186260220b3a5a78b5,/src/cmd/compile/internal/noder/noder.g
 f14214d07de7242c9a6a33186260220b3a5a78b5,/src/cmd/compile/internal/gc/main.go,,219:1-219:29,添加 go:cuinfo.packagename.main 符号到 ctxt.hash map 里,,0,Code Walkthrough,,3865f52f-7efe-4b95-8c31-5ae52b635300,0
 f14214d07de7242c9a6a33186260220b3a5a78b5,/src/cmd/compile/internal/gc/main.go,,222:1-222:20,base.Ctxt 的 Funcs 和 Vars 数组给添加符号,1. types.Types 类型缓存\n2. typecheck.LookupRuntimeFunc 给 base.Ctxt 创建运行时的符号。函数参数定义在 typecheck/mkbuilt.go 生成里面 _builtin。\n,0,Code Walkthrough,,faa5e8aa-faa5-4a72-a878-03a2ae654264,0
 f14214d07de7242c9a6a33186260220b3a5a78b5,/src/cmd/compile/internal/typecheck/typecheck.go,,17:0-34:0,本包的核心检查函数，在 noder 包中检查 ir 的表示,"typecheck包的入口是分散的，通过多个公共函数提供服务，这些函数在编译器的IR构建和处理阶段被广泛调用，形成了编译器类型检查的重要组成部分。\n\n原代码有注释,这个用在读取 export data 时：\nthe source files are typechecked twice: once before writing the export data using types2, and again after reading the export data using gc/typecheck.",0,Code Walkthrough,,e21c82a0-493b-4fcd-9725-6fdcd32a3c74,0
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,205:1-205:14,rttype 通过反射从 abi.Type 中创建出来 types.Type,-,0,Code Walkthrough,,6c59074c-97ec-4b65-a291-76a809798b65,0
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/ssagen/ssa.go,,81:18-81:43,types.NewPtr 对 types.Types[types.TINTER] 对象的 cache 字段设置了值,,0,Code Walkthrough,,0c7e9fa4-d396-4778-846f-60df75bfba3d,0
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,245:1-249:17,闭包捕获循环变量时处理,loopvar.ForCapture 会修改 IR 的表示结构。,0,Code Walkthrough,,5fbecad7-62c8-428a-a9e8-05fbd833db61,0
+
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,283:1-283:30,仅编译 runtime 包时执行,,0,Code Walkthrough,,0b76f92d-b99b-49aa-aa61-8ae2fd6128b6,0
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,271:1-271:40,TODO：或许是打印循环变量修改日志,,0,Code Walkthrough,,59b250e8-2452-43e1-97a8-935bd9845906,0
+
+2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,256:1-256:25,TODO：两种不同 ABI 的函数需要互相调用时，就需要 ABI 包装器来进行转换,Go 编译器中存在两种不同的调用约定（ABI）：\n\nABI0: 传统的基于栈的调用约定，主要用于汇编代码和 C 互操作\nABIInternal: Go 内部的基于寄存器的调用约定，用于 Go 源码编译的函数\n\n当这两种不同 ABI 的函数需要互相调用时，就需要 ABI 包装器来进行转换,0,Code Walkthrough,,e9fb5138-3b69-4891-a05e-7bf3fbf2ac93,0
 
