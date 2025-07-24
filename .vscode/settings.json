@@ -1,0 +1,50 @@
+{
+    "go.goroot": "${workspaceFolder}",
+    "files.exclude": {
+        "**/.git": false,
+        "**/.svn": false,
+        "**/.hg": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false
+    },
+    "explorerExclude.backup": {
+        "**/.git": false,
+        "**/.svn": false,
+        "**/.hg": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false
+    },
+    "code-review.filename": ".vscode/code-review.csv",
+    "code-review.categories": [
+        "Architecture",
+        "Best Practices",
+        "Code-Style",
+        "Complexity",
+        "Error Handling",
+        "Maintainability",
+        "Performance",
+        "Reliability",
+        "Separation of concerns",
+        "Code Walkthrough"
+    ],
+    "code-review.reportWithCodeSelection": true,
+    // go 1.15 太老了，用系统的go安装的工具
+    // go install golang.org/x/tools/gopls@latest
+    // go install golang.org/x/tools/cmd/goimports@latest
+    // go install honnef.co/go/tools/cmd/staticcheck@latest
+    // go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    // go install github.com/go-delve/delve/cmd/dlv@latest
+    // go install github.com/axw/gocov/gocov@latest
+    // go install github.com/kisielk/errcheck@latest
+    // go install github.com/fatih/gomodifytags@latest
+    "go.alternateTools": {
+        "gopls": "/root/go/bin/gopls",
+        "goimports": "/root/go/bin/goimports",
+        "golangci-lint": "/root/go/bin/golangci-lint",
+        "gocov": "/root/go/bin/gocov",
+        "dlv": "/root/go/bin/dlv",
+        "staticcheck": "/root/go/bin/staticcheck",
+        "errcheck": "/root/go/bin/errcheck",
+        "gomodifytags": "/root/go/bin/gomodifytags"
+    }
+}

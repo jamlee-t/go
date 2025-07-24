@@ -1,0 +1,33 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "compile",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "dlvFlags": [
+                "--check-go-version=false"
+            ],
+            "cwd": "${workspaceFolder}/.vscode/_jamtest/001",
+            "args": ["-o", "main.a", "main.go"],
+            "program": "${workspaceFolder}/src/cmd/compile/main.go"
+        },
+        // 查看 golang 中的接口函数派发
+        {
+            "name": "compile interface",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "dlvFlags": [
+                "--check-go-version=false"
+            ],
+            "cwd": "${workspaceFolder}/.vscode/_jamtest/interface_disa",
+            "args": ["-N", "-l", "-S", "main.go"],
+            "program": "${workspaceFolder}/src/cmd/compile/main.go"
+        }
+    ]
+}

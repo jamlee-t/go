@@ -1,0 +1,14 @@
+{
+	"files": [
+		{
+			"path": "src/cmd/compile/main.go",
+			"bookmarks": [
+				{
+					"line": 51,
+					"column": 18,
+					"label": "compile 入口"
+				}
+			]
+		}
+	]
+}
