@@ -39,6 +39,16 @@
 					"label": "[编译器]语法分析正式开始"
 				}
 			]
+		},
+		{
+			"path": "src/cmd/compile/internal/types2/api.go",
+			"bookmarks": [
+				{
+					"line": 485,
+					"column": 5,
+					"label": "type2 类型检查入口"
+				}
+			]
 		}
 	]
 }

@@ -21,9 +21,16 @@ f14214d07de7242c9a6a33186260220b3a5a78b5,/src/cmd/compile/internal/typecheck/typ
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,205:1-205:14,rttype 通过反射从 abi.Type 中创建出来 types.Type,-,0,Code Walkthrough,,6c59074c-97ec-4b65-a291-76a809798b65,0
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/ssagen/ssa.go,,81:18-81:43,types.NewPtr 对 types.Types[types.TINTER] 对象的 cache 字段设置了值,,0,Code Walkthrough,,0c7e9fa4-d396-4778-846f-60df75bfba3d,0
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,245:1-249:17,闭包捕获循环变量时处理,loopvar.ForCapture 会修改 IR 的表示结构。,0,Code Walkthrough,,5fbecad7-62c8-428a-a9e8-05fbd833db61,0
-
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,283:1-283:30,仅编译 runtime 包时执行,,0,Code Walkthrough,,0b76f92d-b99b-49aa-aa61-8ae2fd6128b6,0
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,271:1-271:40,TODO：或许是打印循环变量修改日志,,0,Code Walkthrough,,59b250e8-2452-43e1-97a8-935bd9845906,0
-
 2d1f18815f86ee9a4f9f991e81e77d72e912a575,/src/cmd/compile/internal/gc/main.go,,256:1-256:25,TODO：两种不同 ABI 的函数需要互相调用时，就需要 ABI 包装器来进行转换,Go 编译器中存在两种不同的调用约定（ABI）：\n\nABI0: 传统的基于栈的调用约定，主要用于汇编代码和 C 互操作\nABIInternal: Go 内部的基于寄存器的调用约定，用于 Go 源码编译的函数\n\n当这两种不同 ABI 的函数需要互相调用时，就需要 ABI 包装器来进行转换,0,Code Walkthrough,,e9fb5138-3b69-4891-a05e-7bf3fbf2ac93,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/doc.go,,5:0-5:2,翻译,Compile（通常以go tool compile方式调用）用于编译单个 Go 包，该包由命令行中指定的文件组成。随后，它会生成一个目标文件，文件名以第一个源文件的基名加上.o 后缀构成。\n这个目标文件之后可以与其他目标文件合并为一个包归档文件，或者直接传递给链接器（go tool link）。如果使用 - pack 参数调用编译器，它会直接生成归档文件，跳过中间的目标文件。\n,0,Code Walkthrough,,c0ef6188-0aca-4f59-a7cf-e31dbb4d93c4,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/doc.go,,13:0-13:3,翻译,生成的文件包含关于该包导出的符号的类型信息，以及关于该包从其他包导入的符号所使用的类型的信息。因此，在编译包 P 的客户端 C 时，无需读取 P 的依赖项的文件，只需 P 的编译输出即可。\n,0,Code Walkthrough,,b276f4b0-99ec-45ee-8880-c8248a0b33a7,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/noder/posmap.go,,14:5-14:11,转 syntax.Pos 到 src.Pos,这两个 pos 功能类似\n1.支持记录node的物理源文件位置\n2.支持记录node的物理源文件和逻辑源文件位置。原因是 line 指令介入了\n\nPos 和 PosBase 类之间循环定义。判断是否有 line 指令介入，通过 base.pos.base == base。它在 func (base *PosBase) IsFileBase() bool 中用到。,0,Code Walkthrough,,855d825a-60c7-4c80-a3aa-c36d69bd93cf,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/noder/noder.go,,65:1-65:13,posMap 缓存转换 syntax.Pos 转 src.Pos 的结果,它不是全量理解转换的，仅仅起到缓存的作用,0,Code Walkthrough,,9003ae6a-3abc-40db-a3e3-9436ebee0414,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/types2/resolver.go,,231:2-231:102,fileScope 是 pkgScope 的 子Scope,两个不要搞混了,0,Code Walkthrough,,d21612be-d9b2-46bf-b2b3-29a39e91f4ff,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/types2/resolver.go,,335:5-335:50,import 声明写入 fileScope。其他声明则写入 pkg.Scope,,0,Code Walkthrough,,615885b3-6d7a-4811-8fa5-c85b501038db,0
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/types2/resolver.go,,475:1-475:33,保证导入的包名和已有的声明无冲突,,0,Code Walkthrough,,1348be3b-c21b-4733-a210-16bea8f2ec89,0
+
+3052bda7fcfa9dfc0ad8b16f91883c614179c3d7,/src/cmd/compile/internal/types2/recording.go,,138:22-138:31,记录 info 信息。info 信息是 type2.Check 方法的返回值之一,,0,Code Walkthrough,,5fb6ba66-a5a7-4237-942c-0127dc5b0d65,0
 
